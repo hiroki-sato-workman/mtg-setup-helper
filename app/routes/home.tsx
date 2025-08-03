@@ -45,6 +45,12 @@ interface Schedule {
   notes: string;
 }
 
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
 const MeetingScheduler = () => {
 const [meetings, setMeetings] = useState<Meeting[]>([]);
 const [showForm, setShowForm] = useState(false);
@@ -68,6 +74,7 @@ const [formData, setFormData] = useState<FormData>({
   ]
 });
 const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+const [toasts, setToasts] = useState<Toast[]>([]);
 
 const timeSlots = [
   { value: 'allday', label: '終日' },
@@ -123,13 +130,12 @@ useEffect(() => {
     errors.name = '名前は必須です';
   }
   
-  for (let i = 0; i < 3; i++) {
-    if (!formData.preferredOptions[i].date) {
-      errors[`date_${i}`] = `第${i + 1}希望の日程は必須です`;
-    }
-    if (!formData.preferredOptions[i].timeSlot) {
-      errors[`timeSlot_${i}`] = `第${i + 1}希望の時間帯は必須です`;
-    }
+  // 第1希望のみ必須
+  if (!formData.preferredOptions[0].date) {
+    errors[`date_0`] = `第1希望の日程は必須です`;
+  }
+  if (!formData.preferredOptions[0].timeSlot) {
+    errors[`timeSlot_0`] = `第1希望の時間帯は必須です`;
   }
   
   setValidationErrors(errors);
@@ -297,6 +303,159 @@ const generateIcsFile = (meeting: Meeting) => {
   URL.revokeObjectURL(url);
 };
 
+// icsファイルインポート機能
+const parseIcsFile = (icsContent: string): Partial<Meeting>[] => {
+  const events: Partial<Meeting>[] = [];
+  const lines = icsContent.split(/\r?\n/);
+  let currentEvent: Partial<Meeting> | null = null;
+  let isInEvent = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    if (line === 'BEGIN:VEVENT') {
+      isInEvent = true;
+      currentEvent = {
+        id: Date.now() + Math.random(),
+        name: '',
+        image: '',
+        notes: '',
+        preferredOptions: [],
+        confirmedDate: '',
+        confirmedTimeSlot: '',
+        confirmedStartTime: '',
+        confirmedEndTime: '',
+        status: 'pending'
+      };
+    } else if (line === 'END:VEVENT' && currentEvent) {
+      isInEvent = false;
+      if (currentEvent.name) {
+        events.push(currentEvent);
+      }
+      currentEvent = null;
+    } else if (isInEvent && currentEvent) {
+      if (line.startsWith('SUMMARY:')) {
+        const summary = line.substring(8);
+        // "面談 - " プレフィックスを除去
+        currentEvent.name = summary.replace(/^面談\s*-\s*/, '') || summary;
+      } else if (line.startsWith('DESCRIPTION:')) {
+        currentEvent.notes = line.substring(12).replace(/\\n/g, '\n');
+      } else if (line.startsWith('DTSTART:')) {
+        const dateTimeStr = line.substring(8);
+        try {
+          const dateTime = parseIcsDateTime(dateTimeStr);
+          if (dateTime) {
+            currentEvent.confirmedDate = dateTime.toISOString().split('T')[0];
+            currentEvent.confirmedStartTime = dateTime.toTimeString().substring(0, 5);
+            
+            // 時間帯を推定
+            const hour = dateTime.getHours();
+            if (hour >= 10 && hour < 12) {
+              currentEvent.confirmedTimeSlot = 'morning';
+            } else if (hour >= 13 && hour < 16) {
+              currentEvent.confirmedTimeSlot = 'afternoon';
+            } else if (hour >= 17) {
+              currentEvent.confirmedTimeSlot = 'evening';
+            } else {
+              currentEvent.confirmedTimeSlot = 'allday';
+            }
+          }
+        } catch (error) {
+          console.error('日時の解析に失敗しました:', error);
+        }
+      } else if (line.startsWith('DTEND:')) {
+        const dateTimeStr = line.substring(6);
+        try {
+          const dateTime = parseIcsDateTime(dateTimeStr);
+          if (dateTime) {
+            currentEvent.confirmedEndTime = dateTime.toTimeString().substring(0, 5);
+          }
+        } catch (error) {
+          console.error('終了時刻の解析に失敗しました:', error);
+        }
+      }
+    }
+  }
+
+  return events;
+};
+
+const parseIcsDateTime = (dateTimeStr: string): Date | null => {
+  try {
+    // YYYYMMDDTHHMMSSZ 形式の解析
+    if (dateTimeStr.endsWith('Z')) {
+      const cleanStr = dateTimeStr.slice(0, -1);
+      const year = parseInt(cleanStr.substring(0, 4));
+      const month = parseInt(cleanStr.substring(4, 6)) - 1; // 月は0ベース
+      const day = parseInt(cleanStr.substring(6, 8));
+      const hour = parseInt(cleanStr.substring(9, 11));
+      const minute = parseInt(cleanStr.substring(11, 13));
+      const second = parseInt(cleanStr.substring(13, 15));
+      
+      return new Date(Date.UTC(year, month, day, hour, minute, second));
+    }
+    
+    // YYYYMMDD 形式の解析
+    if (dateTimeStr.length === 8) {
+      const year = parseInt(dateTimeStr.substring(0, 4));
+      const month = parseInt(dateTimeStr.substring(4, 6)) - 1;
+      const day = parseInt(dateTimeStr.substring(6, 8));
+      
+      return new Date(year, month, day);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('日時解析エラー:', error);
+    return null;
+  }
+};
+
+const handleIcsImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const content = e.target?.result as string;
+      const importedEvents = parseIcsFile(content);
+      
+      if (importedEvents.length === 0) {
+        showToast('有効なイベントが見つかりませんでした。', 'error');
+        return;
+      }
+
+      // インポートされたイベントを面談として追加
+      const newMeetings: Meeting[] = importedEvents.map(event => ({
+        id: Date.now() + Math.random(),
+        name: event.name || '無題の面談',
+        image: event.image || '',
+        notes: event.notes || '',
+        preferredOptions: event.confirmedDate && event.confirmedTimeSlot ? 
+          [{ date: event.confirmedDate, timeSlot: event.confirmedTimeSlot }] : [],
+        confirmedDate: event.confirmedDate || '',
+        confirmedTimeSlot: event.confirmedTimeSlot || '',
+        confirmedStartTime: event.confirmedStartTime || '',
+        confirmedEndTime: event.confirmedEndTime || '',
+        status: (event.confirmedDate && event.confirmedStartTime && event.confirmedEndTime) ? 'confirmed' : 'pending'
+      }));
+
+      setMeetings(prevMeetings => [...prevMeetings, ...newMeetings]);
+      setShowImportDialog(false);
+      
+      showToast(`${newMeetings.length}件の面談をインポートしました。`, 'success');
+    } catch (error) {
+      console.error('ファイルの読み込みに失敗しました:', error);
+      showToast('ファイルの読み込みに失敗しました。正しいicsファイルを選択してください。', 'error');
+    }
+  };
+  
+  reader.readAsText(file);
+  // ファイル選択をリセット
+  event.target.value = '';
+};
+
 // 占有されている日時をチェック（現在編集中の面談を除く）
 const isSlotOccupied = (date: string, timeSlot: string, optionIndex: number = -1) => {
   if (!date || !timeSlot) return false;
@@ -378,7 +537,7 @@ const updatePreferredOption = (index: number, field: keyof PreferredOption, valu
   setFormData({...formData, preferredOptions: newOptions});
 };
 
-const isRequired = (index: number) => index < 3;
+const isRequired = (index: number) => index < 1;
 
 // 今日の日付を取得（YYYY-MM-DD形式）
 const getTodayDate = () => {
@@ -418,6 +577,25 @@ const generateScheduleSummary = (): { [key: string]: Schedule[] } => {
   });
 
   return groupedByDate;
+};
+
+// Toast管理機能
+const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const newToast: Toast = {
+    id: Date.now(),
+    message,
+    type
+  };
+  setToasts(prev => [...prev, newToast]);
+  
+  // 3秒後に自動削除
+  setTimeout(() => {
+    setToasts(prev => prev.filter(toast => toast.id !== newToast.id));
+  }, 3000);
+};
+
+const removeToast = (id: number) => {
+  setToasts(prev => prev.filter(toast => toast.id !== id));
 };
 
 const scheduleSummary = generateScheduleSummary();
@@ -584,6 +762,35 @@ return (
       </div>
     )}
 
+    {/* icsインポートダイアログ */}
+    {showImportDialog && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className={`rounded-lg shadow-xl p-6 max-w-md w-full mx-4 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>icsファイルをインポート</h3>
+          <p className={`mb-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+            カレンダーアプリからエクスポートしたicsファイルを選択してください。
+            イベント情報が面談として追加されます。
+          </p>
+          <div className="mb-6">
+            <input
+              type="file"
+              accept=".ics"
+              onChange={handleIcsImport}
+              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setShowImportDialog(false)}
+              className={`px-4 py-2 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-800'}`}
+            >
+              キャンセル
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* 時刻設定ダイアログ */}
     {showTimeDialog && timeDialogData && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -702,7 +909,7 @@ return (
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            希望日程と時間帯（第1〜第3希望は必須）
+            希望日程と時間帯（第1希望は必須）
           </label>
           <div className="space-y-3">
             {formData.preferredOptions.map((option, index) => (
@@ -920,6 +1127,37 @@ return (
           ))}
         </div>
       )}
+    </div>
+
+    {/* Toast通知 */}
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map(toast => (
+        <div
+          key={toast.id}
+          className={`flex items-center p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 transform ${
+            toast.type === 'success' 
+              ? 'bg-green-100 border border-green-200 text-green-800' 
+              : toast.type === 'error'
+              ? 'bg-red-100 border border-red-200 text-red-800'
+              : 'bg-blue-100 border border-blue-200 text-blue-800'
+          }`}
+        >
+          <div className="flex-shrink-0 mr-3">
+            {toast.type === 'success' && <CheckCircle size={20} className="text-green-600" />}
+            {toast.type === 'error' && <AlertTriangle size={20} className="text-red-600" />}
+            {toast.type === 'info' && <Calendar size={20} className="text-blue-600" />}
+          </div>
+          <div className="flex-1 text-sm font-medium">
+            {toast.message}
+          </div>
+          <button
+            onClick={() => removeToast(toast.id)}
+            className="flex-shrink-0 ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ))}
     </div>
   </div>
 );
