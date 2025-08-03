@@ -1,604 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon } from 'lucide-react';
-
-interface PreferredOption {
-  date: string;
-  timeSlot: string;
-}
-
-interface Meeting {
-  id: number;
-  name: string;
-  image: string;
-  notes: string;
-  preferredOptions: PreferredOption[];
-  confirmedDate: string;
-  confirmedTimeSlot: string;
-  confirmedStartTime: string;
-  confirmedEndTime: string;
-  status: 'pending' | 'confirmed';
-}
-
-interface FormData {
-  name: string;
-  image: string;
-  notes: string;
-  preferredOptions: PreferredOption[];
-}
-
-interface ValidationErrors {
-  [key: string]: string;
-}
-
-interface TimeDialogData {
-  meetingId: number;
-  date: string;
-  timeSlot: string;
-}
-
-interface Schedule {
-  date: string;
-  timeSlot: string;
-  meetingName: string;
-  meetingImage: string;
-  priority: number;
-  notes: string;
-}
-
-interface Toast {
-  id: number;
-  message: string;
-  type: 'success' | 'error' | 'info';
-}
+;import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon } from 'lucide-react';
+import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
+import { useTheme } from '~/hooks/useTheme';
+import { generateIcsFile } from '~/utils/icsUtils';
+import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
+import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired } from '~/utils/scheduleUtils';
 
 const MeetingScheduler = () => {
-const [meetings, setMeetings] = useState<Meeting[]>([]);
-const [showForm, setShowForm] = useState(false);
-const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
-const [showImportDialog, setShowImportDialog] = useState(false);
-const [showTimeDialog, setShowTimeDialog] = useState(false);
-const [timeDialogData, setTimeDialogData] = useState<TimeDialogData | null>(null);
-const [showNotificationDialog, setShowNotificationDialog] = useState(false);
-const [notificationTimes, setNotificationTimes] = useState([60, 30]); // デフォルト: 1時間前、30分前
-const [theme, setTheme] = useState<'light' | 'dark'>('light');
-const [formData, setFormData] = useState<FormData>({
-  name: '',
-  image: '',
-  notes: '',
-  preferredOptions: [
-    { date: '', timeSlot: '' },
-    { date: '', timeSlot: '' },
-    { date: '', timeSlot: '' },
-    { date: '', timeSlot: '' },
-    { date: '', timeSlot: '' }
-  ]
-});
-const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-const [toasts, setToasts] = useState<Toast[]>([]);
+  const { theme, toggleTheme } = useTheme();
+  const {
+    meetings,
+    showForm,
+    editingMeeting,
+    showImportDialog,
+    showTimeDialog,
+    timeDialogData,
+    notificationTimes,
+    formData,
+    validationErrors,
+    toasts,
+    addMeeting,
+    editMeeting,
+    deleteMeeting,
+    confirmMeeting,
+    finalizeConfirmation,
+    resetConfirmation,
+    handleIcsImport,
+    removeToast,
+    handleImageUpload,
+    removeImage,
+    updatePreferredOption,
+    resetForm,
+    openNewMeetingForm,
+    setShowImportDialog,
+    setShowTimeDialog,
+    setFormData
+  } = useMeetingScheduler();
 
-const timeSlots = [
-  { value: 'allday', label: '終日' },
-  { value: 'morning', label: '10:00 ~ 12:00' },
-  { value: 'afternoon', label: '13:00 ~ 16:00' },
-  { value: 'evening', label: '17:00以降' }
-];
-
-// localStorageからデータを読み込む
-useEffect(() => {
-  const savedMeetings = localStorage.getItem('meetingSchedulerData');
-  if (savedMeetings) {
-    try {
-      setMeetings(JSON.parse(savedMeetings));
-    } catch (error) {
-      console.error('データの読み込みに失敗しました:', error);
-    }
-  }
-
-  // テーマ設定を読み込む
-  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-  if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-    setTheme(savedTheme);
-  }
-}, []);
-
-// テーマ管理のuseEffect
-useEffect(() => {
-  const html = document.documentElement;
-  
-  // 既存のクラスをクリア
-  html.classList.remove('dark', 'light');
-  
-  if (theme === 'dark') {
-    html.classList.add('dark');
-  } else {
-    html.classList.add('light');
-  }
-  
-  localStorage.setItem('theme', theme);
-}, [theme]);
-
-// meetingsが変更されたらlocalStorageに保存
-useEffect(() => {
-  localStorage.setItem('meetingSchedulerData', JSON.stringify(meetings));
-}, [meetings]);
-
-// 自動バリデーション
-useEffect(() => {
-  const errors: ValidationErrors = {};
-  
-  if (!formData.name.trim()) {
-    errors.name = '名前は必須です';
-  }
-  
-  // 第1希望のみ必須
-  if (!formData.preferredOptions[0].date) {
-    errors[`date_0`] = `第1希望の日程は必須です`;
-  }
-  if (!formData.preferredOptions[0].timeSlot) {
-    errors[`timeSlot_0`] = `第1希望の時間帯は必須です`;
-  }
-  
-  setValidationErrors(errors);
-}, [formData]);
-
-const addMeeting = () => {
-  if (Object.keys(validationErrors).length > 0) {
-    alert('入力内容に不備があります。赤い項目を確認してください。');
-    return;
-  }
-
-  if (editingMeeting) {
-    // 編集モード
-    setMeetings(meetings.map(meeting => 
-      meeting.id === editingMeeting.id 
-        ? {
-            ...editingMeeting,
-            name: formData.name,
-            image: formData.image,
-            notes: formData.notes,
-            preferredOptions: formData.preferredOptions.filter(option => option.date && option.timeSlot),
-            confirmedDate: editingMeeting.confirmedDate || '',
-            confirmedTimeSlot: editingMeeting.confirmedTimeSlot || '',
-            confirmedStartTime: editingMeeting.confirmedStartTime || '',
-            confirmedEndTime: editingMeeting.confirmedEndTime || ''
-          }
-        : meeting
-    ));
-    setEditingMeeting(null);
-  } else {
-    // 新規追加モード
-    const newMeeting: Meeting = {
-      id: Date.now(),
-      name: formData.name,
-      image: formData.image,
-      notes: formData.notes,
-      preferredOptions: formData.preferredOptions.filter(option => option.date && option.timeSlot),
-      confirmedDate: '',
-      confirmedTimeSlot: '',
-      confirmedStartTime: '',
-      confirmedEndTime: '',
-      status: 'pending'
-    };
-    setMeetings([...meetings, newMeeting]);
-  }
-
-  setFormData({
-    name: '',
-    image: '',
-    notes: '',
-    preferredOptions: [
-      { date: '', timeSlot: '' },
-      { date: '', timeSlot: '' },
-      { date: '', timeSlot: '' },
-      { date: '', timeSlot: '' },
-      { date: '', timeSlot: '' }
-    ]
-  });
-  setShowForm(false);
-};
-
-const editMeeting = (meeting: Meeting) => {
-  setEditingMeeting(meeting);
-  setFormData({
-    name: meeting.name,
-    image: meeting.image,
-    notes: meeting.notes,
-    preferredOptions: [
-      ...meeting.preferredOptions,
-      ...Array(5 - meeting.preferredOptions.length).fill({ date: '', timeSlot: '' })
-    ].slice(0, 5)
-  });
-  setShowForm(true);
-};
-
-const deleteMeeting = (id: number) => {
-  setMeetings(meetings.filter(meeting => meeting.id !== id));
-};
-
-const confirmMeeting = (meetingId: number, date: string, timeSlot: string) => {
-  setTimeDialogData({ meetingId, date, timeSlot });
-  setShowTimeDialog(true);
-};
-
-const finalizeConfirmation = (startTime: string, endTime: string) => {
-  if (!timeDialogData) return;
-  
-  const { meetingId, date, timeSlot } = timeDialogData;
-  setMeetings(meetings.map(meeting => 
-    meeting.id === meetingId 
-      ? { 
-          ...meeting, 
-          confirmedDate: date, 
-          confirmedTimeSlot: timeSlot,
-          confirmedStartTime: startTime,
-          confirmedEndTime: endTime,
-          status: 'confirmed' as const
-        }
-      : meeting
-  ));
-  setShowTimeDialog(false);
-  setTimeDialogData(null);
-};
-
-const resetConfirmation = (meetingId: number) => {
-  setMeetings(meetings.map(meeting => 
-    meeting.id === meetingId 
-      ? { 
-          ...meeting, 
-          confirmedDate: '', 
-          confirmedTimeSlot: '', 
-          confirmedStartTime: '',
-          confirmedEndTime: '',
-          status: 'pending' as const
-        }
-      : meeting
-  ));
-};
-
-// icsファイル生成
-const generateIcsFile = (meeting: Meeting) => {
-  if (!meeting.confirmedDate || !meeting.confirmedStartTime || !meeting.confirmedEndTime) return;
-
-  const date = new Date(meeting.confirmedDate);
-  const [startHour, startMinute] = meeting.confirmedStartTime.split(':').map(Number);
-  const [endHour, endMinute] = meeting.confirmedEndTime.split(':').map(Number);
-  
-  const startTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startHour, startMinute);
-  const endTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endHour, endMinute);
-
-  const formatDate = (date: Date) => {
-    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  };
-
-  const now = new Date();
-  const alarms = notificationTimes.map(minutes => 
-    `BEGIN:VALARM\r\nTRIGGER:-PT${minutes}M\r\nACTION:DISPLAY\r\nDESCRIPTION:面談開始${minutes}分前\r\nEND:VALARM`
-  ).join('\r\n');
-
-  const icsContent = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Meeting Scheduler//Meeting Calendar//EN',
-    'BEGIN:VEVENT',
-    `UID:${meeting.id}-${now.getTime()}@meetingscheduler.com`,
-    `DTSTAMP:${formatDate(now)}`,
-    `DTSTART:${formatDate(startTime)}`,
-    `DTEND:${formatDate(endTime)}`,
-    `SUMMARY:面談 - ${meeting.name}`,
-    `DESCRIPTION:${meeting.notes ? meeting.notes.replace(/\n/g, '\\n') : '面談の予定'}`,
-    'STATUS:CONFIRMED',
-    alarms,
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n');
-
-  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `面談_${meeting.name}_${meeting.confirmedDate}.ics`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
-
-// icsファイルインポート機能
-const parseIcsFile = (icsContent: string): Partial<Meeting>[] => {
-  const events: Partial<Meeting>[] = [];
-  const lines = icsContent.split(/\r?\n/);
-  let currentEvent: Partial<Meeting> | null = null;
-  let isInEvent = false;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    
-    if (line === 'BEGIN:VEVENT') {
-      isInEvent = true;
-      currentEvent = {
-        id: Date.now() + Math.random(),
-        name: '',
-        image: '',
-        notes: '',
-        preferredOptions: [],
-        confirmedDate: '',
-        confirmedTimeSlot: '',
-        confirmedStartTime: '',
-        confirmedEndTime: '',
-        status: 'pending'
-      };
-    } else if (line === 'END:VEVENT' && currentEvent) {
-      isInEvent = false;
-      if (currentEvent.name) {
-        events.push(currentEvent);
-      }
-      currentEvent = null;
-    } else if (isInEvent && currentEvent) {
-      if (line.startsWith('SUMMARY:')) {
-        const summary = line.substring(8);
-        // "面談 - " プレフィックスを除去
-        currentEvent.name = summary.replace(/^面談\s*-\s*/, '') || summary;
-      } else if (line.startsWith('DESCRIPTION:')) {
-        currentEvent.notes = line.substring(12).replace(/\\n/g, '\n');
-      } else if (line.startsWith('DTSTART:')) {
-        const dateTimeStr = line.substring(8);
-        try {
-          const dateTime = parseIcsDateTime(dateTimeStr);
-          if (dateTime) {
-            currentEvent.confirmedDate = dateTime.toISOString().split('T')[0];
-            currentEvent.confirmedStartTime = dateTime.toTimeString().substring(0, 5);
-            
-            // 時間帯を推定
-            const hour = dateTime.getHours();
-            if (hour >= 10 && hour < 12) {
-              currentEvent.confirmedTimeSlot = 'morning';
-            } else if (hour >= 13 && hour < 16) {
-              currentEvent.confirmedTimeSlot = 'afternoon';
-            } else if (hour >= 17) {
-              currentEvent.confirmedTimeSlot = 'evening';
-            } else {
-              currentEvent.confirmedTimeSlot = 'allday';
-            }
-          }
-        } catch (error) {
-          console.error('日時の解析に失敗しました:', error);
-        }
-      } else if (line.startsWith('DTEND:')) {
-        const dateTimeStr = line.substring(6);
-        try {
-          const dateTime = parseIcsDateTime(dateTimeStr);
-          if (dateTime) {
-            currentEvent.confirmedEndTime = dateTime.toTimeString().substring(0, 5);
-          }
-        } catch (error) {
-          console.error('終了時刻の解析に失敗しました:', error);
-        }
-      }
-    }
-  }
-
-  return events;
-};
-
-const parseIcsDateTime = (dateTimeStr: string): Date | null => {
-  try {
-    // YYYYMMDDTHHMMSSZ 形式の解析
-    if (dateTimeStr.endsWith('Z')) {
-      const cleanStr = dateTimeStr.slice(0, -1);
-      const year = parseInt(cleanStr.substring(0, 4));
-      const month = parseInt(cleanStr.substring(4, 6)) - 1; // 月は0ベース
-      const day = parseInt(cleanStr.substring(6, 8));
-      const hour = parseInt(cleanStr.substring(9, 11));
-      const minute = parseInt(cleanStr.substring(11, 13));
-      const second = parseInt(cleanStr.substring(13, 15));
-      
-      return new Date(Date.UTC(year, month, day, hour, minute, second));
-    }
-    
-    // YYYYMMDD 形式の解析
-    if (dateTimeStr.length === 8) {
-      const year = parseInt(dateTimeStr.substring(0, 4));
-      const month = parseInt(dateTimeStr.substring(4, 6)) - 1;
-      const day = parseInt(dateTimeStr.substring(6, 8));
-      
-      return new Date(year, month, day);
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('日時解析エラー:', error);
-    return null;
-  }
-};
-
-const handleIcsImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const content = e.target?.result as string;
-      const importedEvents = parseIcsFile(content);
-      
-      if (importedEvents.length === 0) {
-        showToast('有効なイベントが見つかりませんでした。', 'error');
-        return;
-      }
-
-      // インポートされたイベントを面談として追加
-      const newMeetings: Meeting[] = importedEvents.map(event => ({
-        id: Date.now() + Math.random(),
-        name: event.name || '無題の面談',
-        image: event.image || '',
-        notes: event.notes || '',
-        preferredOptions: event.confirmedDate && event.confirmedTimeSlot ? 
-          [{ date: event.confirmedDate, timeSlot: event.confirmedTimeSlot }] : [],
-        confirmedDate: event.confirmedDate || '',
-        confirmedTimeSlot: event.confirmedTimeSlot || '',
-        confirmedStartTime: event.confirmedStartTime || '',
-        confirmedEndTime: event.confirmedEndTime || '',
-        status: (event.confirmedDate && event.confirmedStartTime && event.confirmedEndTime) ? 'confirmed' : 'pending'
-      }));
-
-      setMeetings(prevMeetings => [...prevMeetings, ...newMeetings]);
-      setShowImportDialog(false);
-      
-      showToast(`${newMeetings.length}件の面談をインポートしました。`, 'success');
-    } catch (error) {
-      console.error('ファイルの読み込みに失敗しました:', error);
-      showToast('ファイルの読み込みに失敗しました。正しいicsファイルを選択してください。', 'error');
-    }
-  };
-  
-  reader.readAsText(file);
-  // ファイル選択をリセット
-  event.target.value = '';
-};
-
-// 占有されている日時をチェック（現在編集中の面談を除く）
-const isSlotOccupied = (date: string, timeSlot: string, optionIndex: number = -1) => {
-  if (!date || !timeSlot) return false;
-  
-  // 既存の面談をチェック（編集中の面談は除外）
-  for (let meeting of meetings) {
-    if (editingMeeting && meeting.id === editingMeeting.id) continue;
-    
-    for (let option of meeting.preferredOptions) {
-      if (option.date === date) {
-        if (option.timeSlot === 'allday' || timeSlot === 'allday' || option.timeSlot === timeSlot) {
-          return true;
-        }
-      }
-    }
-  }
-
-  // 現在のフォーム内の他のオプションをチェック
-  for (let i = 0; i < formData.preferredOptions.length; i++) {
-    if (i !== optionIndex) {
-      const option = formData.preferredOptions[i];
-      if (option.date === date && option.timeSlot) {
-        if (option.timeSlot === 'allday' || timeSlot === 'allday' || option.timeSlot === timeSlot) {
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
-};
-
-const getTimeSlotLabel = (value: string) => {
-  return timeSlots.find(slot => slot.value === value)?.label || value;
-};
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ja-JP', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric',
-    weekday: 'short'
-  });
-};
-
-const formatDateShort = (dateString: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ja-JP', { 
-    month: 'short', 
-    day: 'numeric',
-    weekday: 'short'
-  });
-};
-
-const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result === 'string') {
-        setFormData({...formData, image: result});
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-};
-
-const removeImage = () => {
-  setFormData({...formData, image: ''});
-};
-
-const updatePreferredOption = (index: number, field: keyof PreferredOption, value: string) => {
-  const newOptions = [...formData.preferredOptions];
-  newOptions[index] = { ...newOptions[index], [field]: value };
-  setFormData({...formData, preferredOptions: newOptions});
-};
-
-const isRequired = (index: number) => index < 1;
-
-// 今日の日付を取得（YYYY-MM-DD形式）
-const getTodayDate = () => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
-};
-
-// 予定サマリーの生成
-const generateScheduleSummary = (): { [key: string]: Schedule[] } => {
-  const allSchedules: Schedule[] = [];
-  
-  meetings.forEach(meeting => {
-    meeting.preferredOptions.forEach((option, index) => {
-      if (option.date && option.timeSlot) {
-        allSchedules.push({
-          date: option.date,
-          timeSlot: option.timeSlot,
-          meetingName: meeting.name,
-          meetingImage: meeting.image,
-          priority: index + 1,
-          notes: meeting.notes
-        });
-      }
-    });
-  });
-
-  // 日付順にソート
-  allSchedules.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  // 日付別にグループ化
-  const groupedByDate: { [key: string]: Schedule[] } = {};
-  allSchedules.forEach(schedule => {
-    if (!groupedByDate[schedule.date]) {
-      groupedByDate[schedule.date] = [];
-    }
-    groupedByDate[schedule.date].push(schedule);
-  });
-
-  return groupedByDate;
-};
-
-// Toast管理機能
-const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-  const newToast: Toast = {
-    id: Date.now(),
-    message,
-    type
-  };
-  setToasts(prev => [...prev, newToast]);
-  
-  // 3秒後に自動削除
-  setTimeout(() => {
-    setToasts(prev => prev.filter(toast => toast.id !== newToast.id));
-  }, 3000);
-};
-
-const removeToast = (id: number) => {
-  setToasts(prev => prev.filter(toast => toast.id !== id));
-};
-
-const scheduleSummary = generateScheduleSummary();
+  const scheduleSummary = generateScheduleSummary(meetings);
 
 return (
   <div className={`max-w-6xl mx-auto p-6 min-h-screen transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -615,7 +53,7 @@ return (
         {/* テーマ切り替えボタン */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            onClick={toggleTheme}
             className="theme-toggle"
             title={`現在: ${theme === 'light' ? 'ライト' : 'ダーク'}モード`}
           >
@@ -630,22 +68,7 @@ return (
       
       <div className="flex gap-4">
         <button
-          onClick={() => {
-            setEditingMeeting(null);
-            setFormData({
-              name: '',
-              image: '',
-              notes: '',
-              preferredOptions: [
-                { date: '', timeSlot: '' },
-                { date: '', timeSlot: '' },
-                { date: '', timeSlot: '' },
-                { date: '', timeSlot: '' },
-                { date: '', timeSlot: '' }
-              ]
-            });
-            setShowForm(!showForm);
-          }}
+          onClick={openNewMeetingForm}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
         >
           <Plus className="mr-2" size={20} />
@@ -821,7 +244,6 @@ return (
             <button
               onClick={() => {
                 setShowTimeDialog(false);
-                setTimeDialogData(null);
               }}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
@@ -941,7 +363,7 @@ return (
                   >
                     <option value="">時間帯を選択</option>
                     {timeSlots.map(slot => {
-                      const isOccupied = isSlotOccupied(option.date, slot.value, index);
+                      const isOccupied = isSlotOccupied(option.date, slot.value, meetings, editingMeeting, formData, index);
                       return (
                         <option 
                           key={slot.value} 
@@ -956,7 +378,7 @@ return (
                   {validationErrors[`timeSlot_${index}`] && (
                     <div className="text-red-600 text-xs mt-1">{validationErrors[`timeSlot_${index}`]}</div>
                   )}
-                  {option.date && option.timeSlot && isSlotOccupied(option.date, option.timeSlot, index) && (
+                  {option.date && option.timeSlot && isSlotOccupied(option.date, option.timeSlot, meetings, editingMeeting, formData, index) && (
                     <div className="text-orange-600 text-xs mt-1 flex items-center">
                       <AlertTriangle size={12} className="mr-1" />
                       この日時は既に他の希望と重複しています
@@ -992,22 +414,7 @@ return (
             {editingMeeting ? '更新' : '追加'}
           </button>
           <button
-            onClick={() => {
-              setShowForm(false);
-              setEditingMeeting(null);
-              setFormData({
-                name: '',
-                image: '',
-                notes: '',
-                preferredOptions: [
-                  { date: '', timeSlot: '' },
-                  { date: '', timeSlot: '' },
-                  { date: '', timeSlot: '' },
-                  { date: '', timeSlot: '' },
-                  { date: '', timeSlot: '' }
-                ]
-              });
-            }}
+            onClick={resetForm}
             className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
           >
             キャンセル
@@ -1054,7 +461,7 @@ return (
                 <div className="flex gap-2">
                   {meeting.status === 'confirmed' && meeting.confirmedDate && meeting.confirmedStartTime && meeting.confirmedEndTime && (
                     <button
-                      onClick={() => generateIcsFile(meeting)}
+                      onClick={() => generateIcsFile(meeting, notificationTimes)}
                       className="text-purple-600 hover:text-purple-800 transition-colors flex items-center"
                       title="icsファイルをダウンロード"
                     >
