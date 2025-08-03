@@ -151,6 +151,11 @@ return (
                         if (s.timeSlot === 'morning' && hour >= 10 && hour <= 12) return true;
                         if (s.timeSlot === 'afternoon' && hour >= 13 && hour <= 16) return true;
                         if (s.timeSlot === 'evening' && hour >= 17 && hour <= 19) return true;
+                        // 1時間単位の時間帯判定
+                        if (s.timeSlot.includes('-')) {
+                          const [startHour, endHour] = s.timeSlot.split('-').map(Number);
+                          return hour >= startHour && hour < endHour;
+                        }
                         return false;
                       });
                       
@@ -170,6 +175,11 @@ return (
                         if (m.confirmedTimeSlot === 'morning' && hour >= 10 && hour <= 12) return true;
                         if (m.confirmedTimeSlot === 'afternoon' && hour >= 13 && hour <= 16) return true;
                         if (m.confirmedTimeSlot === 'evening' && hour >= 17 && hour <= 19) return true;
+                        // 1時間単位の時間帯判定
+                        if (m.confirmedTimeSlot && m.confirmedTimeSlot.includes('-')) {
+                          const [startHour, endHour] = m.confirmedTimeSlot.split('-').map(Number);
+                          return hour >= startHour && hour < endHour;
+                        }
                         return false;
                       });
                       
@@ -521,6 +531,18 @@ return (
                   >
                     <option value="">時間帯を選択</option>
                     {timeSlots.map(slot => {
+                      if (slot.disabled) {
+                        return (
+                          <option 
+                            key={slot.value} 
+                            value=""
+                            disabled
+                            className="text-gray-400"
+                          >
+                            {slot.label}
+                          </option>
+                        );
+                      }
                       const isOccupied = isSlotOccupied(option.date, slot.value, meetings, editingMeeting, formData, index);
                       return (
                         <option 
@@ -724,6 +746,18 @@ return (
                               >
                                 <option value="">時間帯を選択</option>
                                 {timeSlots.map(slot => {
+                                  if (slot.disabled) {
+                                    return (
+                                      <option 
+                                        key={slot.value} 
+                                        value=""
+                                        disabled
+                                        className="text-gray-400"
+                                      >
+                                        {slot.label}
+                                      </option>
+                                    );
+                                  }
                                   const tempFormDataForSlot = {
                                     name: meeting.name,
                                     image: meeting.image,

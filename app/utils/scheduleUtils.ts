@@ -5,9 +5,18 @@ import type { Meeting, Schedule, PreferredOption, ValidationErrors, FormData, Ti
  */
 export const timeSlots: TimeSlot[] = [
   { value: 'allday', label: '終日' },
+  { value: 'separator1', label: '──────────', disabled: true },
   { value: 'morning', label: '10:00 ~ 12:00' },
   { value: 'afternoon', label: '13:00 ~ 16:00' },
-  { value: 'evening', label: '17:00以降' }
+  { value: 'evening', label: '17:00以降' },
+  { value: 'separator2', label: '──────────', disabled: true },
+  { value: '11-12', label: '11:00 ~ 12:00' },
+  { value: '12-13', label: '12:00 ~ 13:00' },
+  { value: '13-14', label: '13:00 ~ 14:00' },
+  { value: '14-15', label: '14:00 ~ 15:00' },
+  { value: '15-16', label: '15:00 ~ 16:00' },
+  { value: '16-17', label: '16:00 ~ 17:00' },
+  { value: '17-18', label: '17:00 ~ 18:00' }
 ];
 
 /**
@@ -61,6 +70,50 @@ export const generateScheduleSummary = (meetings: Meeting[]): { [key: string]: S
 };
 
 /**
+ * 時間帯の開始・終了時刻を取得します
+ * @param timeSlot 時間帯の値
+ * @returns [開始時刻, 終了時刻] の配列、該当なしの場合は null
+ */
+const getTimeSlotRange = (timeSlot: string): [number, number] | null => {
+  if (timeSlot === 'allday') return [0, 24];
+  if (timeSlot === 'morning') return [10, 12];
+  if (timeSlot === 'afternoon') return [13, 16];
+  if (timeSlot === 'evening') return [17, 24];
+  
+  // 1時間単位の時間帯（例：'11-12', '13-14'）
+  if (timeSlot.includes('-')) {
+    const [start, end] = timeSlot.split('-').map(Number);
+    if (!isNaN(start) && !isNaN(end)) {
+      return [start, end];
+    }
+  }
+  
+  return null;
+};
+
+/**
+ * 2つの時間帯が重複しているかチェックします
+ * @param timeSlot1 時間帯1
+ * @param timeSlot2 時間帯2
+ * @returns 重複している場合は true
+ */
+const isTimeSlotOverlapping = (timeSlot1: string, timeSlot2: string): boolean => {
+  if (timeSlot1 === 'allday' || timeSlot2 === 'allday') return true;
+  if (timeSlot1 === timeSlot2) return true;
+  
+  const range1 = getTimeSlotRange(timeSlot1);
+  const range2 = getTimeSlotRange(timeSlot2);
+  
+  if (!range1 || !range2) return false;
+  
+  const [start1, end1] = range1;
+  const [start2, end2] = range2;
+  
+  // 時間範囲の重複チェック
+  return start1 < end2 && start2 < end1;
+};
+
+/**
  * 指定された日時が他の面談と重複しているかチェックします
  * @param date チェックする日付（YYYY-MM-DD形式）
  * @param timeSlot チェックする時間帯
@@ -86,8 +139,8 @@ export const isSlotOccupied = (
     if (editingMeeting && meeting.id === editingMeeting.id) continue;
     
     for (let option of meeting.preferredOptions) {
-      if (option.date === date) {
-        if (option.timeSlot === 'allday' || timeSlot === 'allday' || option.timeSlot === timeSlot) {
+      if (option.date === date && option.timeSlot) {
+        if (isTimeSlotOverlapping(timeSlot, option.timeSlot)) {
           return true;
         }
       }
@@ -98,7 +151,7 @@ export const isSlotOccupied = (
     if (i !== optionIndex) {
       const option = formData.preferredOptions[i];
       if (option.date === date && option.timeSlot) {
-        if (option.timeSlot === 'allday' || timeSlot === 'allday' || option.timeSlot === timeSlot) {
+        if (isTimeSlotOverlapping(timeSlot, option.timeSlot)) {
           return true;
         }
       }

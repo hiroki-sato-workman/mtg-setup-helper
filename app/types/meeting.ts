@@ -51,4 +51,5 @@ export interface Toast {
 export interface TimeSlot {
   value: string;
   label: string;
+  disabled?: boolean;
 }
