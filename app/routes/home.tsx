@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload } from 'lucide-react';
+import { Calendar, Clock, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon } from 'lucide-react';
 
 interface PreferredOption {
   date: string;
@@ -54,6 +54,7 @@ const [showTimeDialog, setShowTimeDialog] = useState(false);
 const [timeDialogData, setTimeDialogData] = useState<TimeDialogData | null>(null);
 const [showNotificationDialog, setShowNotificationDialog] = useState(false);
 const [notificationTimes, setNotificationTimes] = useState([60, 30]); // デフォルト: 1時間前、30分前
+const [theme, setTheme] = useState<'light' | 'dark'>('light');
 const [formData, setFormData] = useState<FormData>({
   name: '',
   image: '',
@@ -85,7 +86,29 @@ useEffect(() => {
       console.error('データの読み込みに失敗しました:', error);
     }
   }
+
+  // テーマ設定を読み込む
+  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+  if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+    setTheme(savedTheme);
+  }
 }, []);
+
+// テーマ管理のuseEffect
+useEffect(() => {
+  const html = document.documentElement;
+  
+  // 既存のクラスをクリア
+  html.classList.remove('dark', 'light');
+  
+  if (theme === 'dark') {
+    html.classList.add('dark');
+  } else {
+    html.classList.add('light');
+  }
+  
+  localStorage.setItem('theme', theme);
+}, [theme]);
 
 // meetingsが変更されたらlocalStorageに保存
 useEffect(() => {
@@ -400,13 +423,32 @@ const generateScheduleSummary = (): { [key: string]: Schedule[] } => {
 const scheduleSummary = generateScheduleSummary();
 
 return (
-  <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-        <Calendar className="mr-3 text-blue-600" />
-        面談・ミーティング調整ツール
-      </h1>
-      <p className="text-gray-600 mb-4">複数の人との面談日程を効率的に調整し、重複を防ぎます</p>
+  <div className={`max-w-6xl mx-auto p-6 min-h-screen transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h1 className={`text-3xl font-bold mb-2 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+            <Calendar className={`mr-3 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+            面談・ミーティング調整ツール
+          </h1>
+          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>複数の人との面談日程を効率的に調整し、重複を防ぎます</p>
+        </div>
+        
+        {/* テーマ切り替えボタン */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="theme-toggle"
+            title={`現在: ${theme === 'light' ? 'ライト' : 'ダーク'}モード`}
+          >
+            {theme === 'light' ? (
+              <Sun />
+            ) : (
+              <Moon />
+            )}
+          </button>
+        </div>
+      </div>
       
       <div className="flex gap-4">
         <button
@@ -444,9 +486,9 @@ return (
 
     {/* 予定サマリー */}
     {Object.keys(scheduleSummary).length > 0 && (
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <Users className="mr-2 text-green-600" />
+      <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+        <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+          <Users className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
           予定サマリー
         </h2>
         
@@ -601,9 +643,9 @@ return (
 
     {/* 新規追加フォーム */}
     {showForm && (
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <User className="mr-2 text-green-600" />
+      <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+        <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+          <User className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
           {editingMeeting ? '面談を編集' : '新しい面談を追加'}
         </h2>
         
@@ -768,17 +810,17 @@ return (
     )}
 
     {/* 面談リスト */}
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">面談リスト ({meetings.length}件)</h2>
+    <div className={`rounded-lg shadow-lg p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>面談リスト ({meetings.length}件)</h2>
       
       {meetings.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">
+        <div className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
           まだ面談が登録されていません
         </div>
       ) : (
         <div className="space-y-4">
           {meetings.map(meeting => (
-            <div key={meeting.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div key={meeting.id} className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <div className="flex items-center mb-2">
