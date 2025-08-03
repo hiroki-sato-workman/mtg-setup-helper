@@ -1,4 +1,4 @@
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
@@ -188,7 +188,7 @@ return (
                       const hasMultiple = schedulesForHour.length > 1 || confirmedInThisHour.length > 1 || (schedulesForHour.length > 0 && confirmedInThisHour.length > 0);
                       
                       return (
-                        <td key={hour} className={`border px-2 py-3 text-center min-h-20 w-24 ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'} ${
+                        <td key={hour} className={`border px-2 py-3 text-center min-h-24 w-24 ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'} ${
                           !hasScheduled && !hasConfirmed ? (theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50') :
                           hasMultiple ? (theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50') : 
                           hasConfirmed ? (theme === 'dark' ? 'bg-green-900/30' : 'bg-green-50') : (theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-50')
@@ -201,20 +201,30 @@ return (
                               {confirmedInThisHour.map((meeting, idx) => (
                                 <div key={`confirmed-${idx}`} className="relative group">
                                   <div className="flex flex-col items-center">
-                                    {meeting.image ? (
-                                      <img 
-                                        src={meeting.image} 
-                                        alt={meeting.name}
-                                        className="w-6 h-6 rounded-full object-cover border mx-auto"
-                                        title={`${meeting.name}（確定）`}
-                                      />
-                                    ) : (
-                                      <div 
-                                        className="w-6 h-6 bg-green-500 rounded-full mx-auto"
-                                        title={`${meeting.name}（確定）`}
-                                      >
+                                    <div className="relative">
+                                      {meeting.image ? (
+                                        <img 
+                                          src={meeting.image} 
+                                          alt={meeting.name}
+                                          className="w-10 h-10 rounded-full object-cover border mx-auto"
+                                          title={`${meeting.name}（確定）`}
+                                        />
+                                      ) : (
+                                        <div 
+                                          className="w-10 h-10 bg-green-500 rounded-full mx-auto"
+                                          title={`${meeting.name}（確定）`}
+                                        >
+                                        </div>
+                                      )}
+                                      {/* オンライン・オフラインアイコン */}
+                                      <div className="absolute -bottom-0.5 -right-0.5">
+                                        {(meeting.meetingType || 'offline') === 'online' ? (
+                                          <Monitor className="w-5 h-5 text-cyan-500 bg-white rounded-full p-1 border border-gray-200" />
+                                        ) : (
+                                          <MapPin className="w-5 h-5 text-orange-600 bg-white rounded-full p-1 border border-gray-200" />
+                                        )}
                                       </div>
-                                    )}
+                                    </div>
                                     <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>
                                       {meeting.name.length > 8 ? meeting.name.substring(0, 6) + '…' : meeting.name}
                                     </div>
@@ -231,20 +241,30 @@ return (
                               {schedulesForHour.map((schedule, idx) => (
                                 <div key={`schedule-${idx}`} className="relative group">
                                   <div className="flex flex-col items-center">
-                                    {schedule.meetingImage ? (
-                                      <img 
-                                        src={schedule.meetingImage} 
-                                        alt={schedule.meetingName}
-                                        className="w-6 h-6 rounded-full object-cover border mx-auto opacity-70"
-                                        title={`${schedule.meetingName}（第${schedule.priority}希望）`}
-                                      />
-                                    ) : (
-                                      <div 
-                                        className="w-6 h-6 bg-blue-400 rounded-full mx-auto opacity-70"
-                                        title={`${schedule.meetingName}（第${schedule.priority}希望）`}
-                                      >
+                                    <div className="relative">
+                                      {schedule.meetingImage ? (
+                                        <img 
+                                          src={schedule.meetingImage} 
+                                          alt={schedule.meetingName}
+                                          className="w-10 h-10 rounded-full object-cover border mx-auto opacity-70"
+                                          title={`${schedule.meetingName}（第${schedule.priority}希望）`}
+                                        />
+                                      ) : (
+                                        <div 
+                                          className="w-10 h-10 bg-blue-400 rounded-full mx-auto opacity-70"
+                                          title={`${schedule.meetingName}（第${schedule.priority}希望）`}
+                                        >
+                                        </div>
+                                      )}
+                                      {/* オンライン・オフラインアイコン */}
+                                      <div className="absolute -bottom-0.5 -right-0.5">
+                                        {(schedule.meetingType || 'offline') === 'online' ? (
+                                          <Monitor className="w-5 h-5 text-cyan-500 bg-white rounded-full p-1 border border-gray-200 opacity-80" />
+                                        ) : (
+                                          <MapPin className="w-5 h-5 text-orange-600 bg-white rounded-full p-1 border border-gray-200 opacity-80" />
+                                        )}
                                       </div>
-                                    )}
+                                    </div>
                                     <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
                                       {schedule.meetingName.length > 8 ? schedule.meetingName.substring(0, 6) + '…' : schedule.meetingName}
                                     </div>
@@ -287,6 +307,14 @@ return (
             <div className={`w-3 h-3 border rounded ${theme === 'dark' ? 'bg-red-900/30 border-red-700' : 'bg-red-50 border-red-200'}`}></div>
             <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>重複</span>
             <AlertTriangle className="text-red-500 ml-1" size={12} />
+          </div>
+          <div className="flex items-center space-x-1">
+            <Monitor className="text-cyan-500" size={16} />
+            <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>オンライン</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <MapPin className="text-orange-600" size={16} />
+            <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>対面</span>
           </div>
         </div>
       </div>
@@ -573,6 +601,36 @@ return (
         </div>
 
         <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">面談形式</label>
+          <div className="flex gap-4">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="meetingType"
+                value="offline"
+                checked={(formData.meetingType || 'offline') === 'offline'}
+                onChange={(e) => setFormData({...formData, meetingType: e.target.value as 'online' | 'offline'})}
+                className="mr-2"
+              />
+              <MapPin className="mr-1" size={16} />
+              対面
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="meetingType"
+                value="online"
+                checked={(formData.meetingType || 'offline') === 'online'}
+                onChange={(e) => setFormData({...formData, meetingType: e.target.value as 'online' | 'offline'})}
+                className="mr-2"
+              />
+              <Monitor className="mr-1" size={16} />
+              オンライン
+            </label>
+          </div>
+        </div>
+
+        <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">備考</label>
           <textarea
             value={formData.notes}
@@ -699,6 +757,7 @@ return (
                           name: meeting.name,
                           image: meeting.image,
                           notes: meeting.notes,
+                          meetingType: meeting.meetingType || 'offline',
                           preferredOptions: meeting.preferredOptions.length >= 5 
                             ? meeting.preferredOptions 
                             : [...meeting.preferredOptions, ...Array(5 - meeting.preferredOptions.length).fill({ date: '', timeSlot: '' })]
@@ -764,6 +823,7 @@ return (
                                     name: meeting.name,
                                     image: meeting.image,
                                     notes: meeting.notes,
+                                    meetingType: meeting.meetingType || 'offline',
                                     preferredOptions: meeting.preferredOptions.length >= 5 
                                       ? meeting.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt)
                                       : [...meeting.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt), ...Array(Math.max(0, 5 - meeting.preferredOptions.length)).fill({ date: '', timeSlot: '' })]
@@ -793,6 +853,36 @@ return (
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>面談形式</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`meetingType-${meeting.id}`}
+                          value="offline"
+                          checked={(meeting.meetingType || 'offline') === 'offline'}
+                          onChange={(e) => updateInlineMeetingField(meeting.id, 'meetingType', e.target.value as 'online' | 'offline')}
+                          className="mr-2"
+                        />
+                        <MapPin className="mr-1" size={16} />
+                        <span className={theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}>対面</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`meetingType-${meeting.id}`}
+                          value="online"
+                          checked={(meeting.meetingType || 'offline') === 'online'}
+                          onChange={(e) => updateInlineMeetingField(meeting.id, 'meetingType', e.target.value as 'online' | 'offline')}
+                          className="mr-2"
+                        />
+                        <Monitor className="mr-1" size={16} />
+                        <span className={theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}>オンライン</span>
+                      </label>
                     </div>
                   </div>
 
@@ -845,6 +935,17 @@ return (
                           <User className="mr-3 text-blue-600" size={24} />
                         )}
                         <h3 className={`font-semibold text-lg ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>{meeting.name}</h3>
+                      </div>
+                      
+                      <div className="flex items-center mb-2">
+                        {(meeting.meetingType || 'offline') === 'online' ? (
+                          <Monitor className="mr-2 text-cyan-500" size={16} />
+                        ) : (
+                          <MapPin className="mr-2 text-orange-600" size={16} />
+                        )}
+                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {(meeting.meetingType || 'offline') === 'online' ? 'オンライン' : '対面'}
+                        </span>
                       </div>
                       
                       {meeting.notes && (

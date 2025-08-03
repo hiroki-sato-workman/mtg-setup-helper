@@ -179,7 +179,8 @@ END:VCALENDAR`
       confirmedTimeSlot: 'morning',
       confirmedStartTime: '10:30',
       confirmedEndTime: '11:30',
-      status: 'confirmed'
+      status: 'confirmed',
+      meetingType: 'offline'
     }
 
     beforeEach(() => {
@@ -191,15 +192,35 @@ END:VCALENDAR`
       vi.useRealTimers()
     })
 
-    it('should generate ICS file with correct content', () => {
+    it('should generate ICS file with correct content for offline meeting', () => {
       generateIcsFile(mockMeeting, [60, 30])
 
       expect(global.Blob).toHaveBeenCalledWith(
-        [expect.stringContaining('面談 田中太郎')],
+        [expect.stringContaining('[対面] 面談 田中太郎')],
         { type: 'text/calendar;charset=utf-8' }
       )
       // Check that ICS generation was attempted
       expect(global.Blob).toHaveBeenCalled()
+    })
+
+    it('should generate ICS file with correct content for online meeting', () => {
+      const onlineMeeting = { ...mockMeeting, meetingType: 'online' as const }
+      generateIcsFile(onlineMeeting, [60, 30])
+
+      expect(global.Blob).toHaveBeenCalledWith(
+        [expect.stringContaining('[オンライン] 面談 田中太郎')],
+        { type: 'text/calendar;charset=utf-8' }
+      )
+    })
+
+    it('should default to offline when meetingType is undefined', () => {
+      const meetingWithoutType = { ...mockMeeting, meetingType: undefined }
+      generateIcsFile(meetingWithoutType, [60, 30])
+
+      expect(global.Blob).toHaveBeenCalledWith(
+        [expect.stringContaining('[対面] 面談 田中太郎')],
+        { type: 'text/calendar;charset=utf-8' }
+      )
     })
 
     it('should not generate file if required fields are missing', () => {

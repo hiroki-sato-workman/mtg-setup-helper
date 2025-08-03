@@ -70,6 +70,7 @@ export const useMeetingScheduler = () => {
         name: formData.name,
         image: formData.image,
         notes: formData.notes,
+        meetingType: formData.meetingType || 'offline',
         preferredOptions: formData.preferredOptions.filter(option => option.date && option.timeSlot),
         confirmedDate: '',
         confirmedTimeSlot: '',
@@ -90,6 +91,7 @@ export const useMeetingScheduler = () => {
       name: meeting.name,
       image: meeting.image,
       notes: meeting.notes,
+      meetingType: meeting.meetingType || 'offline',
       preferredOptions: [
         ...meeting.preferredOptions,
         ...Array(5 - meeting.preferredOptions.length).fill({ date: '', timeSlot: '' })
@@ -188,6 +190,7 @@ export const useMeetingScheduler = () => {
           name: event.name || '無題の面談',
           image: event.image || '',
           notes: event.notes || '',
+          meetingType: 'offline', // ICSインポート時はデフォルトで対面
           preferredOptions: event.confirmedDate && event.confirmedTimeSlot ? 
             [{ date: event.confirmedDate, timeSlot: event.confirmedTimeSlot }] : [],
           confirmedDate: event.confirmedDate || '',

@@ -14,6 +14,7 @@ export interface Meeting {
   confirmedStartTime: string;
   confirmedEndTime: string;
   status: 'pending' | 'confirmed';
+  meetingType?: 'online' | 'offline';
 }
 
 export interface FormData {
@@ -21,6 +22,7 @@ export interface FormData {
   image: string;
   notes: string;
   preferredOptions: PreferredOption[];
+  meetingType?: 'online' | 'offline';
 }
 
 export interface ValidationErrors {
@@ -40,6 +42,7 @@ export interface Schedule {
   meetingImage: string;
   priority: number;
   notes: string;
+  meetingType?: 'online' | 'offline';
 }
 
 export interface Toast {
