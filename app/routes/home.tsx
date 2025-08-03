@@ -3,7 +3,7 @@ import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
-import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired } from '~/utils/scheduleUtils';
+import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings } from '~/utils/scheduleUtils';
 
 const MeetingScheduler = () => {
   const { theme, toggleTheme } = useTheme();
@@ -37,6 +37,7 @@ const MeetingScheduler = () => {
   } = useMeetingScheduler();
 
   const scheduleSummary = generateScheduleSummary(meetings);
+  const confirmedMeetings = getFilteredConfirmedMeetings(meetings);
 
 return (
   <div className={`max-w-6xl mx-auto p-6 min-h-screen transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -271,6 +272,57 @@ return (
             <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>重複</span>
             <AlertTriangle className="text-red-500 ml-1" size={12} />
           </div>
+        </div>
+      </div>
+    )}
+
+    {/* 確定面談一覧 */}
+    {confirmedMeetings.length > 0 && (
+      <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+        <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+          <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+          確定面談一覧
+        </h2>
+        
+        <div className="space-y-3">
+          {confirmedMeetings.map(meeting => (
+            <div key={meeting.id} className={`flex items-center justify-between p-3 rounded-lg border ${theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'}`}>
+              <div className="flex items-center">
+                {meeting.image ? (
+                  <img 
+                    src={meeting.image} 
+                    alt={meeting.name}
+                    className="w-8 h-8 rounded-full mr-3 object-cover border"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-green-500 rounded-full mr-3 flex items-center justify-center">
+                    <User className="text-white" size={16} />
+                  </div>
+                )}
+                <div>
+                  <div className={`font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+                    {meeting.name}
+                  </div>
+                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {formatDate(meeting.confirmedDate!)} 
+                    {meeting.confirmedStartTime && meeting.confirmedEndTime && (
+                      <span className="ml-2">
+                        {meeting.confirmedStartTime} - {meeting.confirmedEndTime}
+                      </span>
+                    )}
+                    {!meeting.confirmedStartTime && meeting.confirmedTimeSlot && (
+                      <span className="ml-2">
+                        ({getTimeSlotLabel(meeting.confirmedTimeSlot)})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className={`text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-green-700 text-green-100' : 'bg-green-100 text-green-800'}`}>
+                確定済み
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     )}

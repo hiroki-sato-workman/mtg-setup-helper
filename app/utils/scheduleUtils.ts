@@ -160,3 +160,55 @@ export const createEmptyFormData = (): FormData => ({
     { date: '', timeSlot: '' }
   ]
 });
+
+/**
+ * 確定面談をフィルタリング・ソートして表示用リストを生成します
+ * @param meetings 面談情報の配列
+ * @param currentTime 現在時刻（テスト用、省略時は現在時刻を使用）
+ * @returns フィルタリング・ソート済みの確定面談配列
+ * @example
+ * const confirmedMeetings = getFilteredConfirmedMeetings(meetings);
+ */
+export const getFilteredConfirmedMeetings = (meetings: Meeting[], currentTime?: Date): Meeting[] => {
+  const now = currentTime || new Date();
+  
+  return meetings
+    .filter(m => m.status === 'confirmed' && m.confirmedDate)
+    .filter(m => {
+      // 予定日を1時間過ぎた場合は非表示
+      const meetingDate = new Date(m.confirmedDate!);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const meetingDateOnly = new Date(meetingDate.getFullYear(), meetingDate.getMonth(), meetingDate.getDate());
+      
+      // 未来の日付の場合は常に表示
+      if (meetingDateOnly > today) return true;
+      
+      // 過去の日付の場合は非表示
+      if (meetingDateOnly < today) return false;
+      
+      // 時刻が設定されていない場合は今日の終わりまで表示
+      if (!m.confirmedStartTime) return true;
+      // 今日の場合のみ時刻チェック
+      const [hour, minute] = m.confirmedStartTime.split(':').map(Number);
+      meetingDate.setHours(hour, minute, 0, 0);
+      // 開始時刻から1時間経過したら非表示
+      const oneHourAfterStart = new Date(meetingDate.getTime() + 60 * 60 * 1000);
+      return now < oneHourAfterStart;        
+    })
+    .sort((a, b) => {
+      // 日時の古い順（昇順）にソート
+      const dateA = new Date(a.confirmedDate!);
+      const dateB = new Date(b.confirmedDate!);
+      
+      if (a.confirmedStartTime) {
+        const [hourA, minuteA] = a.confirmedStartTime.split(':').map(Number);
+        dateA.setHours(hourA, minuteA, 0, 0);
+      }
+      if (b.confirmedStartTime) {
+        const [hourB, minuteB] = b.confirmedStartTime.split(':').map(Number);
+        dateB.setHours(hourB, minuteB, 0, 0);
+      }
+      
+      return dateA.getTime() - dateB.getTime();
+    });
+};

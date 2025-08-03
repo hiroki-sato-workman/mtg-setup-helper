@@ -6,7 +6,8 @@ import {
   isSlotOccupied,
   validateForm,
   isRequired,
-  createEmptyFormData
+  createEmptyFormData,
+  getFilteredConfirmedMeetings
 } from '../scheduleUtils'
 import type { Meeting, FormData } from '~/types/meeting'
 
@@ -335,4 +336,175 @@ describe('scheduleUtils', () => {
       expect(formData1.preferredOptions).not.toBe(formData2.preferredOptions)
     })
   })
+
+  describe('getFilteredConfirmedMeetings', () => {
+    const createMockMeeting = (overrides: Partial<Meeting> = {}): Meeting => ({
+      id: 1,
+      name: 'テスト太郎',
+      image: '',
+      notes: '',
+      preferredOptions: [],
+      confirmedDate: '',
+      confirmedTimeSlot: '',
+      confirmedStartTime: '',
+      confirmedEndTime: '',
+      status: 'pending',
+      ...overrides
+    });
+
+    it('should filter only confirmed meetings with confirmed date', () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // 7日後
+      const futureDateString = futureDate.toISOString().split('T')[0];
+      
+      const meetings: Meeting[] = [
+        createMockMeeting({ 
+          id: 1, 
+          name: '未確定太郎', 
+          status: 'pending' 
+        }),
+        createMockMeeting({ 
+          id: 2, 
+          name: '確定太郎', 
+          status: 'confirmed', 
+          confirmedDate: futureDateString 
+        }),
+        createMockMeeting({ 
+          id: 3, 
+          name: '確定だが日付なし', 
+          status: 'confirmed', 
+          confirmedDate: '' 
+        })
+      ];
+
+      const result = getFilteredConfirmedMeetings(meetings);
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('確定太郎');
+    });
+
+    it('should exclude meetings after 1 hour from start time', () => {
+      const currentTime = new Date('2024-08-10T12:30:00');
+      const meetings: Meeting[] = [
+        createMockMeeting({ 
+          id: 1, 
+          name: '過去太郎', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-10',
+          confirmedStartTime: '11:00',
+          confirmedEndTime: '12:00'
+        }),
+        createMockMeeting({ 
+          id: 2, 
+          name: '現在花子', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-10',
+          confirmedStartTime: '12:00',
+          confirmedEndTime: '13:00'
+        })
+      ];
+
+      const result = getFilteredConfirmedMeetings(meetings, currentTime);
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('現在花子');
+    });
+
+    it('should show meetings without start time until next day', () => {
+      const currentTime = new Date('2024-08-10T23:30:00');
+      const meetings: Meeting[] = [
+        createMockMeeting({ 
+          id: 1, 
+          name: '今日太郎', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-10',
+          confirmedTimeSlot: 'morning'
+        }),
+        createMockMeeting({ 
+          id: 2, 
+          name: '昨日花子', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-09',
+          confirmedTimeSlot: 'afternoon'
+        })
+      ];
+
+      const result = getFilteredConfirmedMeetings(meetings, currentTime);
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('今日太郎');
+    });
+
+    it('should sort meetings in ascending order by date and time', () => {
+      const meetings: Meeting[] = [
+        createMockMeeting({ 
+          id: 1, 
+          name: '後太郎', 
+          status: 'confirmed',
+          confirmedDate: '2025-08-12',
+          confirmedStartTime: '10:00'
+        }),
+        createMockMeeting({ 
+          id: 2, 
+          name: '先花子', 
+          status: 'confirmed',
+          confirmedDate: '2025-08-10',
+          confirmedStartTime: '15:00'
+        }),
+        createMockMeeting({ 
+          id: 3, 
+          name: '中次郎', 
+          status: 'confirmed',
+          confirmedDate: '2025-08-11',
+          confirmedStartTime: '09:00'
+        })
+      ];
+
+      const result = getFilteredConfirmedMeetings(meetings);
+      expect(result).toHaveLength(3);
+      expect(result[0].name).toBe('先花子');
+      expect(result[1].name).toBe('中次郎');
+      expect(result[2].name).toBe('後太郎');
+    });
+
+    it('should sort by time on same date', () => {
+      const meetings: Meeting[] = [
+        createMockMeeting({ 
+          id: 1, 
+          name: '午後太郎', 
+          status: 'confirmed',
+          confirmedDate: '2025-08-10',
+          confirmedStartTime: '15:00'
+        }),
+        createMockMeeting({ 
+          id: 2, 
+          name: '午前花子', 
+          status: 'confirmed',
+          confirmedDate: '2025-08-10',
+          confirmedStartTime: '09:00'
+        })
+      ];
+
+      const result = getFilteredConfirmedMeetings(meetings);
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('午前花子');
+      expect(result[1].name).toBe('午後太郎');
+    });
+
+    it('should return empty array for no meetings', () => {
+      const result = getFilteredConfirmedMeetings([]);
+      expect(result).toHaveLength(0);
+    });
+
+    it('should use current time when no time parameter provided', () => {
+      const meetings: Meeting[] = [
+        createMockMeeting({ 
+          id: 1, 
+          name: '確定太郎', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-10'
+        })
+      ];
+
+      const result = getFilteredConfirmedMeetings(meetings);
+      expect(Array.isArray(result)).toBe(true);
+    });
+  });
 })
