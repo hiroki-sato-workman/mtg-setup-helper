@@ -195,7 +195,7 @@ END:VCALENDAR`
       generateIcsFile(mockMeeting, [60, 30])
 
       expect(global.Blob).toHaveBeenCalledWith(
-        [expect.stringContaining('面談 - 田中太郎')],
+        [expect.stringContaining('面談 田中太郎')],
         { type: 'text/calendar;charset=utf-8' }
       )
       // Check that ICS generation was attempted

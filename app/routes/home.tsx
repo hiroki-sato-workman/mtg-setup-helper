@@ -97,71 +97,157 @@ return (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">日付</th>
-                <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">10:00-12:00</th>
-                <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">13:00-16:00</th>
-                <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">17:00以降</th>
+              <tr className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
+                <th className={`border px-2 py-3 text-left text-sm font-semibold ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>日付</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>10:00<br />~11:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>11:00<br />~12:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>12:00<br />~13:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>13:00<br />~14:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>14:00<br />~15:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>15:00<br />~16:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>16:00<br />~17:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>17:00<br />~18:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>18:00<br />~19:00</th>
+                <th className={`border px-2 py-3 text-center text-xs font-semibold w-24 ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-700'}`}>19:00<br />~20:00</th>
               </tr>
             </thead>
             <tbody>
-              {Object.entries(scheduleSummary).map(([date, schedules]) => (
-                <tr key={date} className="hover:bg-gray-50">
-                  <td className="border border-gray-200 px-4 py-3 font-medium text-gray-800 whitespace-nowrap">
-                    {formatDateShort(date)}
-                  </td>
-                  {timeSlots.filter(timeSlot => timeSlot.value !== 'allday').map(timeSlot => {
-                    const schedulesForSlot = schedules.filter(s => {
-                      // 終日の場合は全ての時間帯に表示
-                      if (s.timeSlot === 'allday') {
-                        return true;
-                      }
-                      // 通常の時間帯マッチング
-                      return s.timeSlot === timeSlot.value;
-                    });
-                    
-                    return (
-                      <td key={timeSlot.value} className={`border border-gray-200 px-2 py-2 ${
-                        schedulesForSlot.length === 0 ? 'bg-gray-50' :
-                        schedulesForSlot.length > 1 ? 'bg-red-50' : 'bg-blue-50'
-                      }`}>
-                        {schedulesForSlot.length === 0 ? (
-                          <div className="text-xs text-gray-400 text-center">空き</div>
-                        ) : (
-                          <div className="space-y-1">
-                            {schedulesForSlot.map((schedule, idx) => (
-                              <div key={idx} className="flex items-center space-x-1">
-                                {schedule.meetingImage ? (
-                                  <img 
-                                    src={schedule.meetingImage} 
-                                    alt={schedule.meetingName}
-                                    className="w-4 h-4 rounded-full object-cover border flex-shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <User size={8} className="text-gray-600" />
+              {Object.entries(scheduleSummary).map(([date, schedules]) => {
+                // 確定された面談の時間を取得（確定日時のみ）
+                const confirmedMeetings = meetings.filter(m => 
+                  m.status === 'confirmed' && 
+                  m.confirmedDate === date && 
+                  m.confirmedStartTime && 
+                  m.confirmedEndTime
+                );
+                
+                return (
+                  <tr key={date} className={theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-50'}>
+                    <td className={`border px-2 py-3 font-medium whitespace-nowrap ${theme === 'dark' ? 'border-gray-600 text-gray-200' : 'border-gray-200 text-gray-800'}`}>
+                      {formatDateShort(date)}
+                    </td>
+                    {Array.from({ length: 10 }, (_, i) => i + 10).map(hour => {
+                      // この時間帯にある予定を確認
+                      const schedulesForHour = schedules.filter(s => {
+                        // 対応する面談が確定されている場合の処理
+                        const correspondingMeeting = meetings.find(m => m.name === s.meetingName);
+                        if (correspondingMeeting && correspondingMeeting.status === 'confirmed') {
+                          // 確定面談の希望予定は表示しない
+                          return false;
+                        }
+                        
+                        // 終日の場合は全ての時間帯に表示
+                        if (s.timeSlot === 'allday') {
+                          return true;
+                        }
+                        // 時間帯での大まかな判定
+                        if (s.timeSlot === 'morning' && hour >= 10 && hour <= 12) return true;
+                        if (s.timeSlot === 'afternoon' && hour >= 13 && hour <= 16) return true;
+                        if (s.timeSlot === 'evening' && hour >= 17 && hour <= 19) return true;
+                        return false;
+                      });
+                      
+                      // 確定された面談でこの時間帯にあるものを確認
+                      const confirmedInThisHour = confirmedMeetings.filter(m => {
+                        // 終日の場合は全ての時間帯に表示
+                        if (m.confirmedTimeSlot === 'allday') {
+                          return true;
+                        }
+                        // 具体的な時刻が設定されている場合
+                        if (m.confirmedStartTime && m.confirmedEndTime) {
+                          const startHour = parseInt(m.confirmedStartTime.split(':')[0]);
+                          const endHour = parseInt(m.confirmedEndTime.split(':')[0]);
+                          return hour >= startHour && hour < endHour;
+                        }
+                        // 時間帯での判定（confirmedTimeSlotが設定されている場合）
+                        if (m.confirmedTimeSlot === 'morning' && hour >= 10 && hour <= 12) return true;
+                        if (m.confirmedTimeSlot === 'afternoon' && hour >= 13 && hour <= 16) return true;
+                        if (m.confirmedTimeSlot === 'evening' && hour >= 17 && hour <= 19) return true;
+                        return false;
+                      });
+                      
+                      const hasConfirmed = confirmedInThisHour.length > 0;
+                      const hasScheduled = schedulesForHour.length > 0;
+                      const hasMultiple = schedulesForHour.length > 1 || confirmedInThisHour.length > 1 || (schedulesForHour.length > 0 && confirmedInThisHour.length > 0);
+                      
+                      return (
+                        <td key={hour} className={`border px-2 py-3 text-center min-h-20 w-24 ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'} ${
+                          !hasScheduled && !hasConfirmed ? (theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50') :
+                          hasMultiple ? (theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50') : 
+                          hasConfirmed ? (theme === 'dark' ? 'bg-green-900/30' : 'bg-green-50') : (theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-50')
+                        }`}>
+                          {!hasScheduled && !hasConfirmed ? (
+                            <div className="text-xs text-gray-400">-</div>
+                          ) : (
+                            <div className="space-y-1">
+                              {/* 確定された面談を表示 */}
+                              {confirmedInThisHour.map((meeting, idx) => (
+                                <div key={`confirmed-${idx}`} className="relative group">
+                                  <div className="flex flex-col items-center">
+                                    {meeting.image ? (
+                                      <img 
+                                        src={meeting.image} 
+                                        alt={meeting.name}
+                                        className="w-6 h-6 rounded-full object-cover border mx-auto"
+                                        title={`${meeting.name}（確定）`}
+                                      />
+                                    ) : (
+                                      <div 
+                                        className="w-6 h-6 bg-green-500 rounded-full mx-auto"
+                                        title={`${meeting.name}（確定）`}
+                                      >
+                                      </div>
+                                    )}
+                                    <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>
+                                      {meeting.name.length > 8 ? meeting.name.substring(0, 6) + '…' : meeting.name}
+                                    </div>
+                                    <div className={`text-xs ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                                      {meeting.confirmedTimeSlot === 'allday' ? '確定（終日）' : '確定'}
+                                    </div>
                                   </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-xs font-medium text-gray-800 truncate">
-                                    {schedule.meetingName}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    第{schedule.priority}希望{schedule.timeSlot === 'allday' ? '（終日）' : ''}
-                                  </div>
+                                  {hasMultiple && idx === 0 && (
+                                    <AlertTriangle className="text-red-500 absolute -top-1 -right-1" size={8} />
+                                  )}
                                 </div>
-                                {schedulesForSlot.length > 1 && idx === 0 && (
-                                  <AlertTriangle className="text-red-500 flex-shrink-0" size={12} />
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                              ))}
+                              {/* 希望予定を表示 */}
+                              {schedulesForHour.map((schedule, idx) => (
+                                <div key={`schedule-${idx}`} className="relative group">
+                                  <div className="flex flex-col items-center">
+                                    {schedule.meetingImage ? (
+                                      <img 
+                                        src={schedule.meetingImage} 
+                                        alt={schedule.meetingName}
+                                        className="w-6 h-6 rounded-full object-cover border mx-auto opacity-70"
+                                        title={`${schedule.meetingName}（第${schedule.priority}希望）`}
+                                      />
+                                    ) : (
+                                      <div 
+                                        className="w-6 h-6 bg-blue-400 rounded-full mx-auto opacity-70"
+                                        title={`${schedule.meetingName}（第${schedule.priority}希望）`}
+                                      >
+                                      </div>
+                                    )}
+                                    <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
+                                      {schedule.meetingName.length > 8 ? schedule.meetingName.substring(0, 6) + '…' : schedule.meetingName}
+                                    </div>
+                                    <div className={`text-xs ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                                      {schedule.timeSlot === 'allday' ? `第${schedule.priority}希望（終日）` : `第${schedule.priority}希望`}
+                                    </div>
+                                  </div>
+                                  {hasMultiple && idx === 0 && (
+                                    <AlertTriangle className="text-red-500 absolute -top-1 -right-1" size={8} />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -169,16 +255,20 @@ return (
         {/* 凡例 */}
         <div className="mt-4 flex flex-wrap gap-4 text-xs">
           <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-gray-50 border border-gray-200 rounded"></div>
-            <span className="text-gray-600">空き</span>
+            <div className={`w-3 h-3 border rounded ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}></div>
+            <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>空き</span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-blue-50 border border-blue-200 rounded"></div>
-            <span className="text-gray-600">予定あり</span>
+            <div className={`w-3 h-3 border rounded ${theme === 'dark' ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'}`}></div>
+            <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>予定あり</span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-red-50 border border-red-200 rounded"></div>
-            <span className="text-gray-600">重複</span>
+            <div className={`w-3 h-3 border rounded ${theme === 'dark' ? 'bg-green-900/30 border-green-700' : 'bg-green-50 border-green-200'}`}></div>
+            <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>確定</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className={`w-3 h-3 border rounded ${theme === 'dark' ? 'bg-red-900/30 border-red-700' : 'bg-red-50 border-red-200'}`}></div>
+            <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>重複</span>
             <AlertTriangle className="text-red-500 ml-1" size={12} />
           </div>
         </div>
