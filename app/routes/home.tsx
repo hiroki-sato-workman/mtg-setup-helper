@@ -3,7 +3,7 @@ import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
-import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings } from '~/utils/scheduleUtils';
+import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getDefaultTimeFromSlot } from '~/utils/scheduleUtils';
 import { renderFormattedText } from '~/utils/textUtils';
 
 const MeetingScheduler = () => {
@@ -396,6 +396,7 @@ return (
               <input
                 type="time"
                 id="startTime"
+                defaultValue={getDefaultTimeFromSlot(timeDialogData.timeSlot)[0]}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -404,6 +405,7 @@ return (
               <input
                 type="time"
                 id="endTime"
+                defaultValue={getDefaultTimeFromSlot(timeDialogData.timeSlot)[1]}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

@@ -1,4 +1,4 @@
-import type { Meeting, Schedule, PreferredOption, ValidationErrors, FormData, TimeSlot } from '~/types/meeting';
+import type { Meeting, Schedule, ValidationErrors, FormData, TimeSlot } from '~/types/meeting';
 
 /**
  * 利用可能な時間帯の定義
@@ -10,13 +10,15 @@ export const timeSlots: TimeSlot[] = [
   { value: 'afternoon', label: '13:00 ~ 16:00' },
   { value: 'evening', label: '17:00以降' },
   { value: 'separator2', label: '──────────', disabled: true },
+  { value: '10-11', label: '10:00 ~ 11:00' },
   { value: '11-12', label: '11:00 ~ 12:00' },
   { value: '12-13', label: '12:00 ~ 13:00' },
   { value: '13-14', label: '13:00 ~ 14:00' },
   { value: '14-15', label: '14:00 ~ 15:00' },
   { value: '15-16', label: '15:00 ~ 16:00' },
   { value: '16-17', label: '16:00 ~ 17:00' },
-  { value: '17-18', label: '17:00 ~ 18:00' }
+  { value: '17-18', label: '17:00 ~ 18:00' },
+  { value: '18-19', label: '18:00 ~ 19:00' }
 ];
 
 /**
@@ -213,6 +215,34 @@ export const createEmptyFormData = (): FormData => ({
     { date: '', timeSlot: '' }
   ]
 });
+
+/**
+ * 時間帯から開始・終了時刻のデフォルト値を取得します
+ * @param timeSlot 時間帯の値
+ * @returns [開始時刻, 終了時刻] の文字列配列（HH:MM形式）
+ * @example
+ * getDefaultTimeFromSlot('morning') // → ['10:00', '12:00']
+ * getDefaultTimeFromSlot('13-14') // → ['13:00', '14:00']
+ */
+export const getDefaultTimeFromSlot = (timeSlot: string): [string, string] => {
+  if (timeSlot === 'morning') return ['10:00', '12:00'];
+  if (timeSlot === 'afternoon') return ['13:00', '16:00'];
+  if (timeSlot === 'evening') return ['17:00', '19:00'];
+  if (timeSlot === 'allday') return ['09:00', '18:00'];
+  
+  // 1時間単位の時間帯（例：'11-12', '13-14'）
+  if (timeSlot.includes('-')) {
+    const [start, end] = timeSlot.split('-').map(Number);
+    if (!isNaN(start) && !isNaN(end)) {
+      const startTime = `${start.toString().padStart(2, '0')}:00`;
+      const endTime = `${end.toString().padStart(2, '0')}:00`;
+      return [startTime, endTime];
+    }
+  }
+  
+  // デフォルト値
+  return ['10:00', '11:00'];
+};
 
 /**
  * 確定面談をフィルタリング・ソートして表示用リストを生成します
