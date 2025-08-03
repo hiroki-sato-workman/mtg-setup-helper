@@ -53,6 +53,80 @@ export const generateIcsFile = (meeting: Meeting, notificationTimes: number[]) =
 };
 
 /**
+ * 確定済みの複数の面談をまとめて1つのICSファイルとしてエクスポートします
+ * @param meetings 確定済みの面談情報配列
+ * @param notificationTimes 通知時刻の配列（分単位）
+ * @returns void ファイルのダウンロードを実行
+ * @example
+ * generateUnifiedIcsFile(confirmedMeetings, [60, 30]) // 1時間前と30分前に通知
+ */
+export const generateUnifiedIcsFile = (meetings: Meeting[], notificationTimes: number[]) => {
+  const confirmedMeetings = meetings.filter(m => 
+    m.status === 'confirmed' && 
+    m.confirmedDate && 
+    m.confirmedStartTime && 
+    m.confirmedEndTime
+  );
+
+  if (confirmedMeetings.length === 0) {
+    console.warn('確定済みの面談がありません');
+    return;
+  }
+
+  const now = new Date();
+  const events = confirmedMeetings.map(meeting => {
+    const date = new Date(meeting.confirmedDate!);
+    const [startHour, startMinute] = meeting.confirmedStartTime!.split(':').map(Number);
+    const [endHour, endMinute] = meeting.confirmedEndTime!.split(':').map(Number);
+    
+    const startTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startHour, startMinute);
+    const endTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endHour, endMinute);
+
+    const alarms = notificationTimes.map(minutes => 
+      `BEGIN:VALARM\r\nTRIGGER:-PT${minutes}M\r\nACTION:DISPLAY\r\nDESCRIPTION:面談開始${minutes}分前\r\nEND:VALARM`
+    ).join('\r\n');
+
+    return [
+      'BEGIN:VEVENT',
+      `UID:${meeting.id}-${now.getTime()}@meetingscheduler.com`,
+      `DTSTAMP:${formatIcsDate(now)}`,
+      `DTSTART:${formatIcsDate(startTime)}`,
+      `DTEND:${formatIcsDate(endTime)}`,
+      `SUMMARY:面談 ${meeting.name}`,
+      `DESCRIPTION:${meeting.notes ? meeting.notes.replace(/\n/g, '\\n') : '面談の予定'}`,
+      'STATUS:CONFIRMED',
+      alarms,
+      'END:VEVENT'
+    ].join('\r\n');
+  });
+
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Meeting Scheduler//Meeting Calendar//EN',
+    ...events,
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  
+  // ファイル名に日付範囲を含める
+  const dates = confirmedMeetings.map(m => m.confirmedDate!).sort();
+  const startDate = dates[0];
+  const endDate = dates[dates.length - 1];
+  const dateRange = startDate === endDate ? startDate : `${startDate}_${endDate}`;
+  
+  link.download = `確定面談一覧_${dateRange}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+/**
  * ICSファイルの内容を解析して面談情報の配列を返します
  * @param icsContent ICSファイルのテキスト内容
  * @returns 解析された面談情報の部分的なオブジェクトの配列

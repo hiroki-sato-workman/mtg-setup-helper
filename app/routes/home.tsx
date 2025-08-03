@@ -1,7 +1,7 @@
 import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
-import { generateIcsFile } from '~/utils/icsUtils';
+import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
 import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings } from '~/utils/scheduleUtils';
 import { renderFormattedText } from '~/utils/textUtils';
@@ -285,10 +285,20 @@ return (
     {/* 確定面談一覧 */}
     {confirmedMeetings.length > 0 && (
       <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-        <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
-          <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
-          確定面談一覧
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className={`text-xl font-semibold flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+            <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+            確定面談一覧
+          </h2>
+          <button
+            onClick={() => generateUnifiedIcsFile(meetings, notificationTimes)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm"
+            title="確定済みの全ての面談を統合したICSファイルをダウンロード"
+          >
+            <Download className="mr-2" size={16} />
+            統合ICSエクスポート
+          </button>
+        </div>
         
         <div className="space-y-3">
           {confirmedMeetings.map(meeting => (
