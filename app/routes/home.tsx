@@ -1,4 +1,4 @@
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile } from '~/utils/icsUtils';
@@ -12,6 +12,7 @@ const MeetingScheduler = () => {
     meetings,
     showForm,
     editingMeeting,
+    inlineEditingId,
     showImportDialog,
     showTimeDialog,
     timeDialogData,
@@ -21,6 +22,10 @@ const MeetingScheduler = () => {
     toasts,
     addMeeting,
     editMeeting,
+    startInlineEdit,
+    cancelInlineEdit,
+    saveInlineEdit,
+    updateInlineMeetingField,
     deleteMeeting,
     confirmMeeting,
     finalizeConfirmation,
@@ -578,103 +583,314 @@ return (
         <div className="space-y-4">
           {meetings.map(meeting => (
             <div key={meeting.id} className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center mb-2">
-                    {meeting.image ? (
-                      <img 
-                        src={meeting.image} 
-                        alt={meeting.name}
-                        className="w-8 h-8 rounded-full mr-3 object-cover border"
-                      />
-                    ) : (
-                      <User className="mr-3 text-blue-600" size={24} />
-                    )}
-                    <h3 className="font-semibold text-lg">{meeting.name}</h3>
-                  </div>
+              {inlineEditingId === meeting.id ? (
+                // 編集モード - 登録フォームと同じUI
+                <div>
+                  <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+                    <User className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+                    面談を編集
+                  </h2>
                   
-                  {meeting.notes && (
-                    <div className="flex items-start mb-2">
-                      <FileText className="mr-2 text-gray-500 mt-0.5" size={16} />
-                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {renderFormattedText(meeting.notes, theme === 'dark')}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        名前 *
+                      </label>
+                      <input
+                        type="text"
+                        value={meeting.name}
+                        onChange={(e) => updateInlineMeetingField(meeting.id, 'name', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          !meeting.name.trim() ? 'border-red-300 bg-red-50' : (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
+                        }`}
+                        placeholder="面談相手の名前"
+                      />
+                      {!meeting.name.trim() && (
+                        <div className="text-red-600 text-xs mt-1">名前は必須です</div>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>画像（任意）</label>
+                      <div className="flex items-center space-x-2">
+                        {meeting.image ? (
+                          <div className="relative">
+                            <img 
+                              src={meeting.image} 
+                              alt="プレビュー"
+                              className="w-12 h-12 rounded-full object-cover border"
+                            />
+                            <button
+                              onClick={() => updateInlineMeetingField(meeting.id, 'image', '')}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                            <Camera className="text-gray-400" size={20} />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (e) => {
+                                const result = e.target?.result;
+                                if (typeof result === 'string') {
+                                  updateInlineMeetingField(meeting.id, 'image', result);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="text-sm text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
                       </div>
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex gap-2">
-                  {meeting.status === 'confirmed' && meeting.confirmedDate && meeting.confirmedStartTime && meeting.confirmedEndTime && (
-                    <button
-                      onClick={() => generateIcsFile(meeting, notificationTimes)}
-                      className="text-purple-600 hover:text-purple-800 transition-colors flex items-center"
-                      title="icsファイルをダウンロード"
-                    >
-                      <Download size={18} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => editMeeting(meeting)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                    title="編集"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => deleteMeeting(meeting.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                    title="削除"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
+                  </div>
 
-              <div className="border-t pt-3">
-                <div className="mb-2">
-                  <span className="text-sm font-medium text-gray-700">希望日程（クリックで確定）:</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  {meeting.preferredOptions.map((option, index) => (
-                    <div key={index} className="relative">
-                      <button
-                        onClick={() => confirmMeeting(meeting.id, option.date, option.timeSlot)}
-                        className={`w-full p-2 text-sm rounded border transition-colors text-left ${
-                          meeting.confirmedDate === option.date && meeting.confirmedTimeSlot === option.timeSlot
-                            ? 'bg-green-100 border-green-500 text-green-800'
-                            : 'bg-gray-50 border-gray-300 hover:bg-blue-50 hover:border-blue-300'
-                        }`}
-                      >
-                        <div className="font-medium text-gray-800">第{index + 1}希望</div>
-                        <div className="text-gray-700">{formatDate(option.date)}</div>
-                        <div className="text-xs text-gray-600 mt-1">{getTimeSlotLabel(option.timeSlot)}</div>
-                        {meeting.confirmedDate === option.date && meeting.confirmedTimeSlot === option.timeSlot && (
-                          <Check size={16} className="absolute top-2 right-2 text-green-600" />
-                        )}
-                      </button>
+                  <div className="mb-4">
+                    <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      希望日程と時間帯（第1希望は必須）
+                    </label>
+                    <div className="space-y-3">
+                      {Array.from({ length: 5 }, (_, index) => {
+                        const option = meeting.preferredOptions[index] || { date: '', timeSlot: '' };
+                        const tempFormData = {
+                          name: meeting.name,
+                          image: meeting.image,
+                          notes: meeting.notes,
+                          preferredOptions: meeting.preferredOptions.length >= 5 
+                            ? meeting.preferredOptions 
+                            : [...meeting.preferredOptions, ...Array(5 - meeting.preferredOptions.length).fill({ date: '', timeSlot: '' })]
+                        };
+                        const isCurrentSlotOccupied = option.date && option.timeSlot && isSlotOccupied(option.date, option.timeSlot, meetings, meeting, tempFormData, index);
+                        
+                        return (
+                          <div key={index} className="flex items-center space-x-2">
+                            <div className={`w-16 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                              第{index + 1}希望{index === 0 ? ' *' : ''}
+                            </div>
+                            <div className="flex-1">
+                              <input
+                                type="date"
+                                value={option.date}
+                                min={getTodayDate()}
+                                onChange={(e) => {
+                                  const newOptions = [...meeting.preferredOptions];
+                                  while (newOptions.length <= index) {
+                                    newOptions.push({ date: '', timeSlot: '' });
+                                  }
+                                  newOptions[index] = { ...newOptions[index], date: e.target.value };
+                                  updateInlineMeetingField(meeting.id, 'preferredOptions', newOptions);
+                                }}
+                                className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  index === 0 && !option.date ? 'border-red-300 bg-red-50' : (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
+                                }`}
+                              />
+                              {index === 0 && !option.date && (
+                                <div className="text-red-600 text-xs mt-1">第1希望の日程は必須です</div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <select
+                                value={option.timeSlot}
+                                onChange={(e) => {
+                                  const newOptions = [...meeting.preferredOptions];
+                                  while (newOptions.length <= index) {
+                                    newOptions.push({ date: '', timeSlot: '' });
+                                  }
+                                  newOptions[index] = { ...newOptions[index], timeSlot: e.target.value };
+                                  updateInlineMeetingField(meeting.id, 'preferredOptions', newOptions);
+                                }}
+                                className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  index === 0 && !option.timeSlot ? 'border-red-300 bg-red-50' : (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
+                                }`}
+                              >
+                                <option value="">時間帯を選択</option>
+                                {timeSlots.map(slot => {
+                                  const tempFormDataForSlot = {
+                                    name: meeting.name,
+                                    image: meeting.image,
+                                    notes: meeting.notes,
+                                    preferredOptions: meeting.preferredOptions.length >= 5 
+                                      ? meeting.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt)
+                                      : [...meeting.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt), ...Array(Math.max(0, 5 - meeting.preferredOptions.length)).fill({ date: '', timeSlot: '' })]
+                                  };
+                                  const isSlotOccupiedInSelect = option.date && isSlotOccupied(option.date, slot.value, meetings, meeting, tempFormDataForSlot, index);
+                                  return (
+                                    <option 
+                                      key={slot.value} 
+                                      value={slot.value}
+                                      className={isSlotOccupiedInSelect ? 'text-orange-600' : ''}
+                                    >
+                                      {slot.label}{isSlotOccupiedInSelect ? ' (重複)' : ''}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                              {index === 0 && !option.timeSlot && (
+                                <div className="text-red-600 text-xs mt-1">第1希望の時間帯は必須です</div>
+                              )}
+                              {isCurrentSlotOccupied && (
+                                <div className="text-orange-600 text-xs mt-1 flex items-center">
+                                  <AlertTriangle size={12} className="mr-1" />
+                                  この日時は既に他の希望と重複しています
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>備考</label>
+                    <textarea
+                      value={meeting.notes}
+                      onChange={(e) => updateInlineMeetingField(meeting.id, 'notes', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
+                      rows={2}
+                      placeholder="面談の目的や特記事項など"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        // 必須項目チェック
+                        if (!meeting.name.trim() || !meeting.preferredOptions[0]?.date || !meeting.preferredOptions[0]?.timeSlot) {
+                          alert('名前と第1希望の日程・時間帯は必須です。');
+                          return;
+                        }
+                        cancelInlineEdit();
+                      }}
+                      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      保存
+                    </button>
+                    <button
+                      onClick={() => cancelInlineEdit()}
+                      className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
                 </div>
-                
-                {meeting.status === 'confirmed' && meeting.confirmedDate && meeting.confirmedTimeSlot && (
-                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded text-sm flex justify-between items-center">
-                    <div>
-                      <strong>確定日程:</strong> {formatDate(meeting.confirmedDate)} ({getTimeSlotLabel(meeting.confirmedTimeSlot)})
-                      {meeting.confirmedStartTime && meeting.confirmedEndTime && (
-                        <div className="text-xs text-gray-600 mt-1">
-                          時刻: {meeting.confirmedStartTime} - {meeting.confirmedEndTime}
+              ) : (
+                // 閲覧モード
+                <>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center mb-2">
+                        {meeting.image ? (
+                          <img 
+                            src={meeting.image} 
+                            alt={meeting.name}
+                            className="w-8 h-8 rounded-full mr-3 object-cover border"
+                          />
+                        ) : (
+                          <User className="mr-3 text-blue-600" size={24} />
+                        )}
+                        <h3 className={`font-semibold text-lg ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>{meeting.name}</h3>
+                      </div>
+                      
+                      {meeting.notes && (
+                        <div className="flex items-start mb-2">
+                          <FileText className="mr-2 text-gray-500 mt-0.5" size={16} />
+                          <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                            {renderFormattedText(meeting.notes, theme === 'dark')}
+                          </div>
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => resetConfirmation(meeting.id)}
-                      className="text-gray-600 hover:text-gray-800 text-xs underline"
-                    >
-                      確定を取り消す
-                    </button>
+                    
+                    <div className="flex gap-2">
+                      {meeting.status === 'confirmed' && meeting.confirmedDate && meeting.confirmedStartTime && meeting.confirmedEndTime && (
+                        <button
+                          onClick={() => generateIcsFile(meeting, notificationTimes)}
+                          className="text-purple-600 hover:text-purple-800 transition-colors flex items-center"
+                          title="icsファイルをダウンロード"
+                        >
+                          <Download size={18} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => startInlineEdit(meeting.id)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        title="編集"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => deleteMeeting(meeting.id)}
+                        className="text-red-600 hover:text-red-800 transition-colors"
+                        title="削除"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  <div className="border-t pt-3">
+                    <div className="mb-2">
+                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        希望日程（クリックで確定）:
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      {meeting.preferredOptions
+                        .filter(option => option.date && option.timeSlot)
+                        .map((option, index) => (
+                          <div key={index} className="relative">
+                            <button
+                              onClick={() => confirmMeeting(meeting.id, option.date, option.timeSlot)}
+                              className={`w-full p-2 text-sm rounded border transition-colors text-left ${
+                                meeting.confirmedDate === option.date && meeting.confirmedTimeSlot === option.timeSlot
+                                  ? (theme === 'dark' ? 'bg-green-900/30 border-green-700 text-green-300' : 'bg-green-100 border-green-500 text-green-800')
+                                  : (theme === 'dark' ? 'bg-gray-600 border-gray-500 hover:bg-gray-500 text-gray-200' : 'bg-gray-50 border-gray-300 hover:bg-blue-50 hover:border-blue-300 text-gray-800')
+                              }`}
+                            >
+                              <div className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                                第{meeting.preferredOptions.findIndex(opt => opt.date === option.date && opt.timeSlot === option.timeSlot) + 1}希望
+                              </div>
+                              <div className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{formatDate(option.date)}</div>
+                              <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{getTimeSlotLabel(option.timeSlot)}</div>
+                              {meeting.confirmedDate === option.date && meeting.confirmedTimeSlot === option.timeSlot && (
+                                <Check size={16} className="absolute top-2 right-2 text-green-600" />
+                              )}
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                    
+                    {meeting.status === 'confirmed' && meeting.confirmedDate && meeting.confirmedTimeSlot && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded text-sm flex justify-between items-center">
+                        <div>
+                          <strong>確定日程:</strong> {formatDate(meeting.confirmedDate)} ({getTimeSlotLabel(meeting.confirmedTimeSlot)})
+                          {meeting.confirmedStartTime && meeting.confirmedEndTime && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              時刻: {meeting.confirmedStartTime} - {meeting.confirmedEndTime}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => resetConfirmation(meeting.id)}
+                          className="text-gray-600 hover:text-gray-800 text-xs underline"
+                        >
+                          確定を取り消す
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

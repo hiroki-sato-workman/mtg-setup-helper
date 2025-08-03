@@ -13,6 +13,7 @@ export const useMeetingScheduler = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
+  const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [timeDialogData, setTimeDialogData] = useState<TimeDialogData | null>(null);
@@ -95,6 +96,32 @@ export const useMeetingScheduler = () => {
       ].slice(0, 5)
     });
     setShowForm(true);
+  };
+
+  const startInlineEdit = (meetingId: number) => {
+    setInlineEditingId(meetingId);
+  };
+
+  const cancelInlineEdit = () => {
+    setInlineEditingId(null);
+  };
+
+  const saveInlineEdit = (meetingId: number, updatedMeeting: Partial<Meeting>) => {
+    setMeetings(meetings.map(meeting => 
+      meeting.id === meetingId 
+        ? { ...meeting, ...updatedMeeting }
+        : meeting
+    ));
+    setInlineEditingId(null);
+    showToast('面談情報を更新しました。', 'success');
+  };
+
+  const updateInlineMeetingField = (meetingId: number, field: keyof Meeting, value: any) => {
+    setMeetings(meetings.map(meeting => 
+      meeting.id === meetingId 
+        ? { ...meeting, [field]: value }
+        : meeting
+    ));
   };
 
   const deleteMeeting = (id: number) => {
@@ -242,6 +269,7 @@ export const useMeetingScheduler = () => {
     meetings,
     showForm,
     editingMeeting,
+    inlineEditingId,
     showImportDialog,
     showTimeDialog,
     timeDialogData,
@@ -253,6 +281,10 @@ export const useMeetingScheduler = () => {
     // Actions
     addMeeting,
     editMeeting,
+    startInlineEdit,
+    cancelInlineEdit,
+    saveInlineEdit,
+    updateInlineMeetingField,
     deleteMeeting,
     confirmMeeting,
     finalizeConfirmation,
