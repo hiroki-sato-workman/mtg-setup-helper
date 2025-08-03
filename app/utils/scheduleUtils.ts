@@ -12,7 +12,7 @@ export const timeSlots: TimeSlot[] = [
 
 /**
  * 時間帯のvalueから表示ラベルを取得します
- * @param value - 時間帯のvalue（'morning', 'afternoon', 'evening', 'allday'）
+ * @param value 時間帯のvalue（'morning', 'afternoon', 'evening', 'allday'）
  * @returns 表示用ラベル、見つからない場合は元のvalueを返す
  * @example
  * getTimeSlotLabel('morning') // → "10:00 ~ 12:00"
@@ -24,7 +24,7 @@ export const getTimeSlotLabel = (value: string) => {
 
 /**
  * 面談一覧から日付別のスケジュールサマリーを生成します
- * @param meetings - 面談情報の配列
+ * @param meetings 面談情報の配列
  * @returns 日付をキーとしたスケジュール情報のオブジェクト
  * @example
  * generateScheduleSummary(meetings) // → { '2024-01-15': [{ date: '2024-01-15', meetingName: '田中太郎', ... }] }
@@ -62,12 +62,12 @@ export const generateScheduleSummary = (meetings: Meeting[]): { [key: string]: S
 
 /**
  * 指定された日時が他の面談と重複しているかチェックします
- * @param date - チェックする日付（YYYY-MM-DD形式）
- * @param timeSlot - チェックする時間帯
- * @param meetings - 現在の面談一覧
- * @param editingMeeting - 編集中の面談（チェックから除外）
- * @param formData - 現在のフォームデータ
- * @param optionIndex - チェックするオプションのインデックス（フォーム内重複チェック用）
+ * @param date チェックする日付（YYYY-MM-DD形式）
+ * @param timeSlot チェックする時間帯
+ * @param meetings 現在の面談一覧
+ * @param editingMeeting 編集中の面談（チェックから除外）
+ * @param formData 現在のフォームデータ
+ * @param optionIndex チェックするオプションのインデックス（フォーム内重複チェック用）
  * @returns 重複している場合はtrue
  * @example
  * isSlotOccupied('2024-01-15', 'morning', meetings, null, formData, 0) // → true/false
@@ -110,7 +110,7 @@ export const isSlotOccupied = (
 
 /**
  * フォームデータのバリデーションを実行します
- * @param formData - 検証するフォームデータ
+ * @param formData 検証するフォームデータ
  * @returns エラー情報のオブジェクト（エラーがない場合は空オブジェクト）
  * @example
  * validateForm(formData) // → { name: '名前は必須です' } または {}
@@ -134,7 +134,7 @@ export const validateForm = (formData: FormData): ValidationErrors => {
 
 /**
  * 指定されたインデックスの項目が必須かどうかを判定します
- * @param index - チェックする項目のインデックス（0始まり）
+ * @param index チェックする項目のインデックス（0始まり）
  * @returns 必須の場合はtrue（現在は第1希望のみ必須）
  * @example
  * isRequired(0) // → true（第1希望は必須）

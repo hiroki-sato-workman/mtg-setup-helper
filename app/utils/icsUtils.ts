@@ -3,9 +3,9 @@ import { formatIcsDate } from './dateUtils';
 
 /**
  * 面談情報からICSファイルを生成してダウンロードします
- * @param meeting - 面談情報オブジェクト
- * @param notificationTimes - 通知時刻の配列（分単位）
- * @returns void - ファイルのダウンロードを実行
+ * @param meeting 面談情報オブジェクト
+ * @param notificationTimes 通知時刻の配列（分単位）
+ * @returns void ファイルのダウンロードを実行
  * @example
  * generateIcsFile(meeting, [60, 30]) // 1時間前と30分前に通知
  */
@@ -33,7 +33,7 @@ export const generateIcsFile = (meeting: Meeting, notificationTimes: number[]) =
     `DTSTAMP:${formatIcsDate(now)}`,
     `DTSTART:${formatIcsDate(startTime)}`,
     `DTEND:${formatIcsDate(endTime)}`,
-    `SUMMARY:面談 - ${meeting.name}`,
+    `SUMMARY:面談 ${meeting.name}`,
     `DESCRIPTION:${meeting.notes ? meeting.notes.replace(/\n/g, '\\n') : '面談の予定'}`,
     'STATUS:CONFIRMED',
     alarms,
@@ -54,7 +54,7 @@ export const generateIcsFile = (meeting: Meeting, notificationTimes: number[]) =
 
 /**
  * ICSファイルの内容を解析して面談情報の配列を返します
- * @param icsContent - ICSファイルのテキスト内容
+ * @param icsContent ICSファイルのテキスト内容
  * @returns 解析された面談情報の部分的なオブジェクトの配列
  * @example
  * parseIcsFile(icsContent) // → [{ name: '田中太郎', confirmedDate: '2024-01-15', ... }]
@@ -135,7 +135,7 @@ export const parseIcsFile = (icsContent: string): Partial<Meeting>[] => {
 
 /**
  * ICSフォーマットの日時文字列をDateオブジェクトに変換します
- * @param dateTimeStr - ICS形式の日時文字列（YYYYMMDDTHHMMSSZまたはYYYYMMDD）
+ * @param dateTimeStr ICS形式の日時文字列（YYYYMMDDTHHMMSSZまたはYYYYMMDD）
  * @returns 変換されたDateオブジェクト、解析できない場合はnull
  * @example
  * parseIcsDateTime('20240115T103000Z') // → Dateオブジェクト
