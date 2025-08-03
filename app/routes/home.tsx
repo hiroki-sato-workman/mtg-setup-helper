@@ -1,9 +1,10 @@
-;import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
 import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings } from '~/utils/scheduleUtils';
+import { renderFormattedText } from '~/utils/textUtils';
 
 const MeetingScheduler = () => {
   const { theme, toggleTheme } = useTheme();
@@ -595,7 +596,9 @@ return (
                   {meeting.notes && (
                     <div className="flex items-start mb-2">
                       <FileText className="mr-2 text-gray-500 mt-0.5" size={16} />
-                      <span className="text-gray-700 text-sm">{meeting.notes}</span>
+                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {renderFormattedText(meeting.notes, theme === 'dark')}
+                      </div>
                     </div>
                   )}
                 </div>
