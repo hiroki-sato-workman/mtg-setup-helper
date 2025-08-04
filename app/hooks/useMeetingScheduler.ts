@@ -43,6 +43,7 @@ export const useMeetingScheduler = () => {
     setValidationErrors(validateForm(formData));
   }, [formData]);
 
+
   const addMeeting = () => {
     if (Object.keys(validationErrors).length > 0) {
       alert('入力内容に不備があります。赤い項目を確認してください。');
@@ -278,6 +279,19 @@ export const useMeetingScheduler = () => {
     setEditingMeeting(null);
     setFormData(createEmptyFormData());
     setShowForm(!showForm);
+    
+    // フォームが表示された後にスクロール
+    if (!showForm) {
+      setTimeout(() => {
+        const formElement = document.getElementById('meeting-form');
+        if (formElement) {
+          formElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }, 100);
+    }
   };
 
   const togglePrivacyMode = () => {

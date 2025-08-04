@@ -620,7 +620,7 @@ return (
 
     {/* 新規追加フォーム */}
     {showForm && (
-      <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div id="meeting-form" className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
           <User className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
           {editingMeeting ? '面談を編集' : '新しい面談を追加'}
