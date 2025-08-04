@@ -40,6 +40,7 @@ const MeetingScheduler = () => {
     resetForm,
     openNewMeetingForm,
     togglePrivacyMode,
+    scrollToMeeting,
     handleDataExport,
     handleDataImport,
     setShowImportDialog,
@@ -268,9 +269,12 @@ return (
                                         )}
                                       </div>
                                     </div>
-                                    <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>
+                                    <button 
+                                      onClick={() => scrollToMeeting(meeting.id)}
+                                      className={`text-xs font-medium mt-0.5 leading-tight break-words cursor-pointer hover:underline transition-all ${theme === 'dark' ? 'text-green-300 hover:text-green-200' : 'text-green-700 hover:text-green-800'}`}
+                                    >
                                       {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : (meeting.name.length > 8 ? meeting.name.substring(0, 6) + '…' : meeting.name)}
-                                    </div>
+                                    </button>
                                     <div className={`text-xs ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                                       {meeting.confirmedTimeSlot === 'allday' && !meeting.confirmedStartTime && !meeting.confirmedEndTime ? '確定（終日）' : '確定'}
                                     </div>
@@ -318,9 +322,12 @@ return (
                                         )}
                                       </div>
                                     </div>
-                                    <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
+                                    <button 
+                                      onClick={() => scrollToMeeting(meetingId)}
+                                      className={`text-xs font-medium mt-0.5 leading-tight break-words cursor-pointer hover:underline transition-all ${theme === 'dark' ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-800'}`}
+                                    >
                                       {privacyMode ? getPrivacyIdentifier(meetingId, allMeetingIds) : (schedule.meetingName.length > 8 ? schedule.meetingName.substring(0, 6) + '…' : schedule.meetingName)}
-                                    </div>
+                                    </button>
                                     <div className={`text-xs ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                                       {schedule.timeSlot === 'allday' ? `第${schedule.priority}希望（終日）` : `第${schedule.priority}希望`}
                                     </div>
@@ -412,9 +419,12 @@ return (
                   </div>
                 )}
                 <div>
-                  <div className={`font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+                  <button 
+                    onClick={() => scrollToMeeting(meeting.id)}
+                    className={`font-medium cursor-pointer hover:underline transition-all text-left ${theme === 'dark' ? 'text-gray-100 hover:text-gray-50' : 'text-gray-800 hover:text-gray-900'}`}
+                  >
                     {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : meeting.name}
-                  </div>
+                  </button>
                   <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                     {formatDate(meeting.confirmedDate!)} 
                     {meeting.confirmedStartTime && meeting.confirmedEndTime && (
@@ -738,7 +748,7 @@ return (
       ) : (
         <div className="space-y-4">
           {meetings.map(meeting => (
-            <div key={meeting.id} className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
+            <div key={meeting.id} id={`meeting-${meeting.id}`} className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
               {inlineEditingId === meeting.id ? (
                 // 編集モード - 登録フォームと同じUI
                 <div>

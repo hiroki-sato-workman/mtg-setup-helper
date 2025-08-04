@@ -273,6 +273,21 @@ export const useMeetingScheduler = () => {
     setPrivacyMode(!privacyMode);
   };
 
+  const scrollToMeeting = (meetingId: number) => {
+    const element = document.getElementById(`meeting-${meetingId}`);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      // Add a temporary highlight effect
+      element.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-50');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-50');
+      }, 2000);
+    }
+  };
+
   const handleDataExport = () => {
     if (!isDevelopmentMode()) return;
     
@@ -339,6 +354,7 @@ export const useMeetingScheduler = () => {
     resetForm,
     openNewMeetingForm,
     togglePrivacyMode,
+    scrollToMeeting,
     handleDataExport,
     handleDataImport,
     
