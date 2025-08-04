@@ -431,7 +431,7 @@ return (
               type="file"
               accept=".ics"
               onChange={handleIcsImport}
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+              className={`w-full text-sm cursor-pointer ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100`}
             />
           </div>
           <div className="flex gap-2 justify-end">
@@ -449,28 +449,28 @@ return (
     {/* 時刻設定ダイアログ */}
     {showTimeDialog && timeDialogData && (
       <div className="fixed inset-0 flex items-center justify-center z-50" style={{backgroundColor: 'rgba(0, 0, 0, 0.5)'}}>
-        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-          <h3 className="text-lg font-semibold mb-4">詳細時刻設定</h3>
-          <p className="text-gray-600 mb-4 text-sm">
+        <div className={`rounded-lg shadow-xl p-6 max-w-md w-full mx-4 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>詳細時刻設定</h3>
+          <p className={`mb-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             {formatDate(timeDialogData.date)} ({getTimeSlotLabel(timeDialogData.timeSlot)})
           </p>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">開始時刻</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>開始時刻</label>
               <input
                 type="time"
                 id="startTime"
                 defaultValue={getDefaultTimeFromSlot(timeDialogData.timeSlot)[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">終了時刻</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>終了時刻</label>
               <input
                 type="time"
                 id="endTime"
                 defaultValue={getDefaultTimeFromSlot(timeDialogData.timeSlot)[1]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
               />
             </div>
           </div>
@@ -479,7 +479,7 @@ return (
               onClick={() => {
                 setShowTimeDialog(false);
               }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              className={`px-4 py-2 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-800'}`}
             >
               キャンセル
             </button>
@@ -514,7 +514,7 @@ return (
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               名前 *
             </label>
             <input
@@ -522,17 +522,19 @@ return (
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                validationErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                validationErrors.name ? 
+                  (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
+                  (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
               }`}
               placeholder="面談相手の名前"
             />
             {validationErrors.name && (
-              <div className="text-red-600 text-xs mt-1">{validationErrors.name}</div>
+              <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{validationErrors.name}</div>
             )}
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">画像（任意）</label>
+            <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>画像（任意）</label>
             <div className="flex items-center space-x-2">
               {formData.image ? (
                 <div className="relative">
@@ -557,14 +559,14 @@ return (
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="text-sm text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className={`text-sm file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}
               />
             </div>
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             希望日程と時間帯（第1希望は必須）
           </label>
           <div className="space-y-3">
@@ -580,11 +582,13 @@ return (
                     min={getTodayDate()}
                     onChange={(e) => updatePreferredOption(index, 'date', e.target.value)}
                     className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      validationErrors[`date_${index}`] ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      validationErrors[`date_${index}`] ? 
+                        (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
+                        (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
                     }`}
                   />
                   {validationErrors[`date_${index}`] && (
-                    <div className="text-red-600 text-xs mt-1">{validationErrors[`date_${index}`]}</div>
+                    <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{validationErrors[`date_${index}`]}</div>
                   )}
                 </div>
                 <div className="flex-1">
@@ -592,7 +596,9 @@ return (
                     value={option.timeSlot}
                     onChange={(e) => updatePreferredOption(index, 'timeSlot', e.target.value)}
                     className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      validationErrors[`timeSlot_${index}`] ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      validationErrors[`timeSlot_${index}`] ? 
+                        (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
+                        (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
                     }`}
                   >
                     <option value="">時間帯を選択</option>
@@ -622,7 +628,7 @@ return (
                     })}
                   </select>
                   {validationErrors[`timeSlot_${index}`] && (
-                    <div className="text-red-600 text-xs mt-1">{validationErrors[`timeSlot_${index}`]}</div>
+                    <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{validationErrors[`timeSlot_${index}`]}</div>
                   )}
                   {option.date && option.timeSlot && isSlotOccupied(option.date, option.timeSlot, meetings, editingMeeting, formData, index) && (
                     <div className="text-orange-600 text-xs mt-1 flex items-center">
@@ -637,9 +643,9 @@ return (
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">面談形式</label>
+          <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>面談形式</label>
           <div className="flex gap-4">
-            <label className="flex items-center">
+            <label className={`flex items-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               <input
                 type="radio"
                 name="meetingType"
@@ -648,10 +654,10 @@ return (
                 onChange={(e) => setFormData({...formData, meetingType: e.target.value as 'online' | 'offline'})}
                 className="mr-2"
               />
-              <MapPin className="mr-1" size={16} />
+              <MapPin className="mr-1 text-orange-600" size={16} />
               対面
             </label>
-            <label className="flex items-center">
+            <label className={`flex items-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               <input
                 type="radio"
                 name="meetingType"
@@ -660,18 +666,18 @@ return (
                 onChange={(e) => setFormData({...formData, meetingType: e.target.value as 'online' | 'offline'})}
                 className="mr-2"
               />
-              <Monitor className="mr-1" size={16} />
+              <Monitor className="mr-1 text-cyan-500" size={16} />
               オンライン
             </label>
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">備考</label>
+          <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>備考</label>
           <textarea
             value={formData.notes}
             onChange={(e) => setFormData({...formData, notes: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
             rows={2}
             placeholder="面談の目的や特記事項など"
           />
@@ -729,12 +735,14 @@ return (
                         value={meeting.name}
                         onChange={(e) => updateInlineMeetingField(meeting.id, 'name', e.target.value)}
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          !meeting.name.trim() ? 'border-red-300 bg-red-50' : (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
+                          !meeting.name.trim() ? 
+                            (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
+                            (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
                         }`}
                         placeholder="面談相手の名前"
                       />
                       {!meeting.name.trim() && (
-                        <div className="text-red-600 text-xs mt-1">名前は必須です</div>
+                        <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>名前は必須です</div>
                       )}
                     </div>
                     
@@ -776,7 +784,7 @@ return (
                               reader.readAsDataURL(file);
                             }
                           }}
-                          className="text-sm text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          className={`text-sm file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}
                         />
                       </div>
                     </div>
@@ -819,11 +827,13 @@ return (
                                   updateInlineMeetingField(meeting.id, 'preferredOptions', newOptions);
                                 }}
                                 className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  index === 0 && !option.date ? 'border-red-300 bg-red-50' : (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
+                                  index === 0 && !option.date ? 
+                                    (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
+                                    (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
                                 }`}
                               />
                               {index === 0 && !option.date && (
-                                <div className="text-red-600 text-xs mt-1">第1希望の日程は必須です</div>
+                                <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>第1希望の日程は必須です</div>
                               )}
                             </div>
                             <div className="flex-1">
@@ -838,7 +848,9 @@ return (
                                   updateInlineMeetingField(meeting.id, 'preferredOptions', newOptions);
                                 }}
                                 className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  index === 0 && !option.timeSlot ? 'border-red-300 bg-red-50' : (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
+                                  index === 0 && !option.timeSlot ? 
+                                    (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
+                                    (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
                                 }`}
                               >
                                 <option value="">時間帯を選択</option>
@@ -877,7 +889,7 @@ return (
                                 })}
                               </select>
                               {index === 0 && !option.timeSlot && (
-                                <div className="text-red-600 text-xs mt-1">第1希望の時間帯は必須です</div>
+                                <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>第1希望の時間帯は必須です</div>
                               )}
                               {isCurrentSlotOccupied && (
                                 <div className="text-orange-600 text-xs mt-1 flex items-center">
@@ -1060,18 +1072,18 @@ return (
                     </div>
                     
                     {meeting.status === 'confirmed' && meeting.confirmedDate && meeting.confirmedTimeSlot && (
-                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded text-sm flex justify-between items-center">
+                      <div className={`mt-3 p-3 rounded text-sm flex justify-between items-center ${theme === 'dark' ? 'bg-green-900/20 border border-green-700' : 'bg-green-50 border border-green-200'}`}>
                         <div>
                           <strong>確定日程:</strong> {formatDate(meeting.confirmedDate)} ({getTimeSlotLabel(meeting.confirmedTimeSlot)})
                           {meeting.confirmedStartTime && meeting.confirmedEndTime && (
-                            <div className="text-xs text-gray-600 mt-1">
+                            <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                               時刻: {meeting.confirmedStartTime} - {meeting.confirmedEndTime}
                             </div>
                           )}
                         </div>
                         <button
                           onClick={() => resetConfirmation(meeting.id)}
-                          className="text-gray-600 hover:text-gray-800 text-xs underline"
+                          className={`text-xs underline transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'}`}
                         >
                           確定を取り消す
                         </button>
@@ -1101,7 +1113,7 @@ return (
         >
           <div className="flex-shrink-0 mr-3">
             {toast.type === 'success' && <CheckCircle size={20} className="text-green-600" />}
-            {toast.type === 'error' && <AlertTriangle size={20} className="text-red-600" />}
+            {toast.type === 'error' && <AlertTriangle size={20} className={theme === 'dark' ? 'text-red-400' : 'text-red-600'} />}
             {toast.type === 'info' && <Calendar size={20} className="text-blue-600" />}
           </div>
           <div className="flex-1 text-sm font-medium">
@@ -1109,7 +1121,7 @@ return (
           </div>
           <button
             onClick={() => removeToast(toast.id)}
-            className="flex-shrink-0 ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+            className={`flex-shrink-0 ml-3 transition-colors ${theme === 'dark' ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <X size={16} />
           </button>
