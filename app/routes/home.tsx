@@ -248,7 +248,7 @@ return (
                                           className={`w-10 h-10 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mx-auto flex items-center justify-center`}
                                           title={`${getPrivacyIdentifier(meeting.id, allMeetingIds)}（確定）`}
                                         >
-                                          <User className="text-white" size={16} />
+                                          <User className="text-white" size={20} />
                                         </div>
                                       ) : meeting.image ? (
                                         <img 
@@ -262,7 +262,7 @@ return (
                                           className="w-10 h-10 bg-green-500 rounded-full mx-auto flex items-center justify-center"
                                           title={`${meeting.name}（確定）`}
                                         >
-                                          <User className="text-white" size={16} />
+                                          <User className="text-white" size={20} />
                                         </div>
                                       )}
                                       {/* オンライン・オフラインアイコン */}
@@ -301,7 +301,7 @@ return (
                                           className={`w-10 h-10 ${getPrivacyColor(meetingId, allMeetingIds)} rounded-full mx-auto opacity-70 flex items-center justify-center`}
                                           title={`${getPrivacyIdentifier(meetingId, allMeetingIds)}（第${schedule.priority}希望）`}
                                         >
-                                          <User className="text-white" size={16} />
+                                          <User className="text-white" size={20} />
                                         </div>
                                       ) : schedule.meetingImage ? (
                                         <img 
@@ -315,7 +315,7 @@ return (
                                           className="w-10 h-10 bg-blue-400 rounded-full mx-auto opacity-70 flex items-center justify-center"
                                           title={`${schedule.meetingName}（第${schedule.priority}希望）`}
                                         >
-                                          <User className="text-white" size={16} />
+                                          <User className="text-white" size={20} />
                                         </div>
                                       )}
                                       {/* オンライン・オフラインアイコン */}
@@ -426,18 +426,18 @@ return (
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   {privacyMode ? (
-                    <div className={`w-8 h-8 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
-                      <User className="text-white" size={16} />
+                    <div className={`w-12 h-12 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
+                      <User className="text-white" size={20} />
                     </div>
                   ) : meeting.image ? (
                     <img 
                       src={meeting.image} 
                       alt={meeting.name}
-                      className="w-8 h-8 rounded-full mr-3 object-cover border"
+                      className="w-12 h-12 rounded-full mr-3 object-cover border"
                     />
                   ) : (
-                    <div className="w-8 h-8 bg-green-500 rounded-full mr-3 flex items-center justify-center">
-                      <User className="text-white" size={16} />
+                    <div className="w-12 h-12 bg-green-500 rounded-full mr-3 flex items-center justify-center">
+                      <User className="text-white" size={20} />
                     </div>
                   )}
                   <div>
@@ -1088,14 +1088,14 @@ return (
                     <div className="flex-1">
                       <div className="flex items-center mb-2">
                         {privacyMode ? (
-                          <div className={`w-8 h-8 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
-                            <User className="text-white" size={16} />
+                          <div className={`w-12 h-12 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
+                            <User className="text-white" size={20} />
                           </div>
                         ) : meeting.image ? (
                           <img 
                             src={meeting.image} 
                             alt={meeting.name}
-                            className="w-8 h-8 rounded-full mr-3 object-cover border"
+                            className="w-12 h-12 rounded-full mr-3 object-cover border"
                           />
                         ) : (
                           <User className="mr-3 text-blue-600" size={24} />
