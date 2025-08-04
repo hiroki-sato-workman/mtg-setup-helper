@@ -54,8 +54,8 @@ const MeetingScheduler = () => {
   const allMeetingIds = meetings.map(m => m.id);
 
 return (
-  <div className={`max-w-6xl mx-auto p-6 min-h-screen transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
-    <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+  <div className={`max-w-6xl mx-auto p-0 md:p-6 min-h-screen transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h1 className={`text-3xl font-bold mb-2 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
@@ -138,7 +138,7 @@ return (
 
     {/* 予定サマリー */}
     {Object.keys(scheduleSummary).length > 0 && (
-      <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
           <Users className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
           予定サマリー
@@ -383,7 +383,7 @@ return (
 
     {/* 確定面談一覧 */}
     {confirmedMeetings.length > 0 && (
-      <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="flex justify-between items-center mb-4">
           <h2 className={`text-xl font-semibold flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
             <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
@@ -538,7 +538,7 @@ return (
 
     {/* 新規追加フォーム */}
     {showForm && (
-      <div className={`rounded-lg shadow-lg p-6 mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
           <User className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
           {editingMeeting ? '面談を編集' : '新しい面談を追加'}
@@ -738,7 +738,7 @@ return (
     )}
 
     {/* 面談リスト */}
-    <div className={`rounded-lg shadow-lg p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+    <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
       <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>面談リスト ({meetings.length}件)</h2>
       
       {meetings.length === 0 ? (
