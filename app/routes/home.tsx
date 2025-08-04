@@ -1,10 +1,11 @@
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin, Eye, EyeOff } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
 import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getDefaultTimeFromSlot } from '~/utils/scheduleUtils';
 import { renderFormattedText } from '~/utils/textUtils';
+import { getPrivacyIdentifier, getPrivacyColor, getMeetingIdFromSchedule } from '~/utils/privacyUtils';
 
 const MeetingScheduler = () => {
   const { theme, toggleTheme } = useTheme();
@@ -20,6 +21,7 @@ const MeetingScheduler = () => {
     formData,
     validationErrors,
     toasts,
+    privacyMode,
     addMeeting,
     editMeeting,
     startInlineEdit,
@@ -37,6 +39,7 @@ const MeetingScheduler = () => {
     updatePreferredOption,
     resetForm,
     openNewMeetingForm,
+    togglePrivacyMode,
     setShowImportDialog,
     setShowTimeDialog,
     setFormData
@@ -44,6 +47,7 @@ const MeetingScheduler = () => {
 
   const scheduleSummary = generateScheduleSummary(meetings);
   const confirmedMeetings = getFilteredConfirmedMeetings(meetings);
+  const allMeetingIds = meetings.map(m => m.id);
 
 return (
   <div className={`max-w-6xl mx-auto p-6 min-h-screen transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -57,8 +61,19 @@ return (
           <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>複数の人との面談日程を効率的に調整し、重複を防ぎます</p>
         </div>
         
-        {/* テーマ切り替えボタン */}
+        {/* テーマ切り替えボタンとプライバシーモード切り替えボタン */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={togglePrivacyMode}
+            className="theme-toggle"
+            title={`プライバシーモード: ${privacyMode ? 'ON（情報を隠す）' : 'OFF（情報を表示）'}`}
+          >
+            {privacyMode ? (
+              <EyeOff />
+            ) : (
+              <Eye />
+            )}
+          </button>
           <button
             onClick={toggleTheme}
             className="theme-toggle"
@@ -202,7 +217,14 @@ return (
                                 <div key={`confirmed-${idx}`} className="relative group">
                                   <div className="flex flex-col items-center">
                                     <div className="relative">
-                                      {meeting.image ? (
+                                      {privacyMode ? (
+                                        <div 
+                                          className={`w-10 h-10 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mx-auto flex items-center justify-center`}
+                                          title={`${getPrivacyIdentifier(meeting.id, allMeetingIds)}（確定）`}
+                                        >
+                                          <User className="text-white" size={16} />
+                                        </div>
+                                      ) : meeting.image ? (
                                         <img 
                                           src={meeting.image} 
                                           alt={meeting.name}
@@ -226,7 +248,7 @@ return (
                                       </div>
                                     </div>
                                     <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>
-                                      {meeting.name.length > 8 ? meeting.name.substring(0, 6) + '…' : meeting.name}
+                                      {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : (meeting.name.length > 8 ? meeting.name.substring(0, 6) + '…' : meeting.name)}
                                     </div>
                                     <div className={`text-xs ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                                       {meeting.confirmedTimeSlot === 'allday' ? '確定（終日）' : '確定'}
@@ -238,11 +260,20 @@ return (
                                 </div>
                               ))}
                               {/* 希望予定を表示 */}
-                              {schedulesForHour.map((schedule, idx) => (
+                              {schedulesForHour.map((schedule, idx) => {
+                                const meetingId = getMeetingIdFromSchedule(meetings, schedule.meetingName);
+                                return (
                                 <div key={`schedule-${idx}`} className="relative group">
                                   <div className="flex flex-col items-center">
                                     <div className="relative">
-                                      {schedule.meetingImage ? (
+                                      {privacyMode ? (
+                                        <div 
+                                          className={`w-10 h-10 ${getPrivacyColor(meetingId, allMeetingIds)} rounded-full mx-auto opacity-70 flex items-center justify-center`}
+                                          title={`${getPrivacyIdentifier(meetingId, allMeetingIds)}（第${schedule.priority}希望）`}
+                                        >
+                                          <User className="text-white" size={16} />
+                                        </div>
+                                      ) : schedule.meetingImage ? (
                                         <img 
                                           src={schedule.meetingImage} 
                                           alt={schedule.meetingName}
@@ -266,7 +297,7 @@ return (
                                       </div>
                                     </div>
                                     <div className={`text-xs font-medium mt-0.5 leading-tight break-words ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
-                                      {schedule.meetingName.length > 8 ? schedule.meetingName.substring(0, 6) + '…' : schedule.meetingName}
+                                      {privacyMode ? getPrivacyIdentifier(meetingId, allMeetingIds) : (schedule.meetingName.length > 8 ? schedule.meetingName.substring(0, 6) + '…' : schedule.meetingName)}
                                     </div>
                                     <div className={`text-xs ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                                       {schedule.timeSlot === 'allday' ? `第${schedule.priority}希望（終日）` : `第${schedule.priority}希望`}
@@ -276,7 +307,8 @@ return (
                                     <AlertTriangle className="text-red-500 absolute -top-1 -right-1" size={8} />
                                   )}
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
                         </td>
@@ -342,7 +374,11 @@ return (
           {confirmedMeetings.map(meeting => (
             <div key={meeting.id} className={`flex items-center justify-between p-3 rounded-lg border ${theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'}`}>
               <div className="flex items-center">
-                {meeting.image ? (
+                {privacyMode ? (
+                  <div className={`w-8 h-8 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
+                    <User className="text-white" size={16} />
+                  </div>
+                ) : meeting.image ? (
                   <img 
                     src={meeting.image} 
                     alt={meeting.name}
@@ -355,7 +391,7 @@ return (
                 )}
                 <div>
                   <div className={`font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
-                    {meeting.name}
+                    {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : meeting.name}
                   </div>
                   <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                     {formatDate(meeting.confirmedDate!)} 
@@ -925,7 +961,11 @@ return (
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
                       <div className="flex items-center mb-2">
-                        {meeting.image ? (
+                        {privacyMode ? (
+                          <div className={`w-8 h-8 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
+                            <User className="text-white" size={16} />
+                          </div>
+                        ) : meeting.image ? (
                           <img 
                             src={meeting.image} 
                             alt={meeting.name}
@@ -934,7 +974,9 @@ return (
                         ) : (
                           <User className="mr-3 text-blue-600" size={24} />
                         )}
-                        <h3 className={`font-semibold text-lg ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>{meeting.name}</h3>
+                        <h3 className={`font-semibold text-lg ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+                          {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : meeting.name}
+                        </h3>
                       </div>
                       
                       <div className="flex items-center mb-2">
@@ -952,7 +994,7 @@ return (
                         <div className="flex items-start mb-2">
                           <FileText className="mr-2 text-gray-500 mt-0.5" size={16} />
                           <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {renderFormattedText(meeting.notes, theme === 'dark')}
+                            {privacyMode ? `${getPrivacyIdentifier(meeting.id, allMeetingIds)}のメモ` : renderFormattedText(meeting.notes, theme === 'dark')}
                           </div>
                         </div>
                       )}

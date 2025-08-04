@@ -21,6 +21,7 @@ export const useMeetingScheduler = () => {
   const [formData, setFormData] = useState<FormData>(createEmptyFormData());
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [privacyMode, setPrivacyMode] = useState(false);
 
   useEffect(() => {
     const savedMeetings = localStorage.getItem('meetingSchedulerData');
@@ -267,6 +268,10 @@ export const useMeetingScheduler = () => {
     setShowForm(!showForm);
   };
 
+  const togglePrivacyMode = () => {
+    setPrivacyMode(!privacyMode);
+  };
+
   return {
     // State
     meetings,
@@ -280,6 +285,7 @@ export const useMeetingScheduler = () => {
     formData,
     validationErrors,
     toasts,
+    privacyMode,
     
     // Actions
     addMeeting,
@@ -300,6 +306,7 @@ export const useMeetingScheduler = () => {
     updatePreferredOption,
     resetForm,
     openNewMeetingForm,
+    togglePrivacyMode,
     
     // Setters
     setShowImportDialog,
