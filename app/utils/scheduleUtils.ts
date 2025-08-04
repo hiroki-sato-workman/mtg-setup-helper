@@ -44,6 +44,11 @@ export const generateScheduleSummary = (meetings: Meeting[]): { [key: string]: S
   const allSchedules: Schedule[] = [];
   
   meetings.forEach(meeting => {
+    // 確定済み面談の場合は希望予定を含めない
+    if (meeting.status === 'confirmed') {
+      return;
+    }
+    
     meeting.preferredOptions.forEach((option, index) => {
       if (option.date && option.timeSlot) {
         allSchedules.push({

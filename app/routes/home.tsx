@@ -179,13 +179,6 @@ return (
                     {Array.from({ length: 10 }, (_, i) => i + 10).map(hour => {
                       // この時間帯にある予定を確認
                       const schedulesForHour = schedules.filter(s => {
-                        // 対応する面談が確定されている場合の処理
-                        const correspondingMeeting = meetings.find(m => m.name === s.meetingName);
-                        if (correspondingMeeting && correspondingMeeting.status === 'confirmed') {
-                          // 確定面談の希望予定は表示しない
-                          return false;
-                        }
-                        
                         // 終日の場合は全ての時間帯に表示
                         if (s.timeSlot === 'allday') {
                           return true;
@@ -204,17 +197,16 @@ return (
                       
                       // 確定された面談でこの時間帯にあるものを確認
                       const confirmedInThisHour = confirmedMeetings.filter(m => {
-                        // 終日の場合は全ての時間帯に表示
-                        if (m.confirmedTimeSlot === 'allday') {
-                          return true;
-                        }
-                        // 具体的な時刻が設定されている場合
+                        // 具体的な時刻が設定されている場合は、それを優先する
                         if (m.confirmedStartTime && m.confirmedEndTime) {
                           const startHour = parseInt(m.confirmedStartTime.split(':')[0]);
                           const endHour = parseInt(m.confirmedEndTime.split(':')[0]);
                           return hour >= startHour && hour < endHour;
                         }
-                        // 時間帯での判定（confirmedTimeSlotが設定されている場合）
+                        // 具体的な時刻がない場合のみ時間帯で判定
+                        if (m.confirmedTimeSlot === 'allday') {
+                          return true;
+                        }
                         if (m.confirmedTimeSlot === 'morning' && hour >= 10 && hour <= 12) return true;
                         if (m.confirmedTimeSlot === 'afternoon' && hour >= 13 && hour <= 16) return true;
                         if (m.confirmedTimeSlot === 'evening' && hour >= 17 && hour <= 19) return true;
@@ -280,7 +272,7 @@ return (
                                       {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : (meeting.name.length > 8 ? meeting.name.substring(0, 6) + '…' : meeting.name)}
                                     </div>
                                     <div className={`text-xs ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                                      {meeting.confirmedTimeSlot === 'allday' ? '確定（終日）' : '確定'}
+                                      {meeting.confirmedTimeSlot === 'allday' && !meeting.confirmedStartTime && !meeting.confirmedEndTime ? '確定（終日）' : '確定'}
                                     </div>
                                   </div>
                                   {hasMultiple && idx === 0 && (

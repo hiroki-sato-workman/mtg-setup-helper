@@ -138,6 +138,45 @@ describe('scheduleUtils', () => {
       expect(Object.keys(result)).toEqual(['2024-01-15'])
       expect(result['2024-01-15']).toHaveLength(1)
     })
+
+    it('should exclude confirmed meetings from schedule summary', () => {
+      const meetingsWithConfirmed: Meeting[] = [
+        {
+          id: 1,
+          name: '未確定太郎',
+          image: '',
+          notes: '',
+          preferredOptions: [
+            { date: '2024-01-15', timeSlot: 'morning' }
+          ],
+          confirmedDate: '',
+          confirmedTimeSlot: '',
+          confirmedStartTime: '',
+          confirmedEndTime: '',
+          status: 'pending'
+        },
+        {
+          id: 2,
+          name: '確定花子',
+          image: '',
+          notes: '',
+          preferredOptions: [
+            { date: '2024-01-15', timeSlot: 'allday' }
+          ],
+          confirmedDate: '2024-01-15',
+          confirmedTimeSlot: '13-14',
+          confirmedStartTime: '13:00',
+          confirmedEndTime: '14:00',
+          status: 'confirmed'
+        }
+      ]
+      
+      const result = generateScheduleSummary(meetingsWithConfirmed)
+      // Only the pending meeting should appear in the summary
+      expect(Object.keys(result)).toEqual(['2024-01-15'])
+      expect(result['2024-01-15']).toHaveLength(1)
+      expect(result['2024-01-15'][0].meetingName).toBe('未確定太郎')
+    })
   })
 
   describe('isSlotOccupied', () => {
