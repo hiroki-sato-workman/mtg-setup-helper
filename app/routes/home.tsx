@@ -233,17 +233,18 @@ return (
                                         />
                                       ) : (
                                         <div 
-                                          className="w-10 h-10 bg-green-500 rounded-full mx-auto"
+                                          className="w-10 h-10 bg-green-500 rounded-full mx-auto flex items-center justify-center"
                                           title={`${meeting.name}（確定）`}
                                         >
+                                          <User className="text-white" size={16} />
                                         </div>
                                       )}
                                       {/* オンライン・オフラインアイコン */}
-                                      <div className="absolute -bottom-0.5 -right-0.5">
+                                      <div className="absolute -bottom-0.5 -right-1">
                                         {(meeting.meetingType || 'offline') === 'online' ? (
-                                          <Monitor className="w-5 h-5 text-cyan-500 bg-white rounded-full p-1 border border-gray-200" />
+                                          <Monitor className="w-5 h-5 text-cyan-500 bg-white rounded-full p-0.5 border border-gray-200" size={18} />
                                         ) : (
-                                          <MapPin className="w-5 h-5 text-orange-600 bg-white rounded-full p-1 border border-gray-200" />
+                                          <MapPin className="w-5 h-5 text-orange-600 bg-white rounded-full p-0.5 border border-gray-200" size={18} />
                                         )}
                                       </div>
                                     </div>
@@ -282,17 +283,18 @@ return (
                                         />
                                       ) : (
                                         <div 
-                                          className="w-10 h-10 bg-blue-400 rounded-full mx-auto opacity-70"
+                                          className="w-10 h-10 bg-blue-400 rounded-full mx-auto opacity-70 flex items-center justify-center"
                                           title={`${schedule.meetingName}（第${schedule.priority}希望）`}
                                         >
+                                          <User className="text-white" size={16} />
                                         </div>
                                       )}
                                       {/* オンライン・オフラインアイコン */}
-                                      <div className="absolute -bottom-0.5 -right-0.5">
+                                      <div className="absolute -bottom-0.5 -right-1">
                                         {(schedule.meetingType || 'offline') === 'online' ? (
-                                          <Monitor className="w-5 h-5 text-cyan-500 bg-white rounded-full p-1 border border-gray-200 opacity-80" />
+                                          <Monitor className="w-5 h-5 text-cyan-500 bg-white rounded-full p-0.5 border border-gray-200 opacity-80" size={18} />
                                         ) : (
-                                          <MapPin className="w-5 h-5 text-orange-600 bg-white rounded-full p-1 border border-gray-200 opacity-80" />
+                                          <MapPin className="w-5 h-5 text-orange-600 bg-white rounded-full p-0.5 border border-gray-200 opacity-80" size={18} />
                                         )}
                                       </div>
                                     </div>
