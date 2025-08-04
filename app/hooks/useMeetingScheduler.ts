@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Meeting, FormData, ValidationErrors, TimeDialogData, Toast } from '~/types/meeting';
 import { validateForm, createEmptyFormData } from '~/utils/scheduleUtils';
 import { parseIcsFile } from '~/utils/icsUtils';
+import { exportMeetingData, importMeetingData, isDevelopmentMode } from '~/utils/dataUtils';
 
 /**
  * 面談スケジューラーの状態管理とビジネスロジックを提供するカスタムフック
@@ -272,6 +273,37 @@ export const useMeetingScheduler = () => {
     setPrivacyMode(!privacyMode);
   };
 
+  const handleDataExport = () => {
+    if (!isDevelopmentMode()) return;
+    
+    try {
+      exportMeetingData(meetings);
+      showToast('データをエクスポートしました', 'success');
+    } catch (error) {
+      console.error('データエクスポートエラー:', error);
+      showToast('データのエクスポートに失敗しました', 'error');
+    }
+  };
+
+  const handleDataImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isDevelopmentMode()) return;
+    
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const importedMeetings = await importMeetingData(file);
+      setMeetings(importedMeetings);
+      showToast(`${importedMeetings.length}件の面談データをインポートしました`, 'success');
+    } catch (error) {
+      console.error('データインポートエラー:', error);
+      showToast('データのインポートに失敗しました: ' + (error as Error).message, 'error');
+    }
+    
+    // ファイル入力をリセット
+    event.target.value = '';
+  };
+
   return {
     // State
     meetings,
@@ -307,10 +339,15 @@ export const useMeetingScheduler = () => {
     resetForm,
     openNewMeetingForm,
     togglePrivacyMode,
+    handleDataExport,
+    handleDataImport,
     
     // Setters
     setShowImportDialog,
     setShowTimeDialog,
-    setFormData
+    setFormData,
+    
+    // Development mode check
+    isDevelopmentMode: isDevelopmentMode()
   };
 };

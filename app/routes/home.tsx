@@ -1,4 +1,4 @@
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin, Eye, EyeOff } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin, Eye, EyeOff, FolderDown, FolderUp } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
@@ -40,9 +40,12 @@ const MeetingScheduler = () => {
     resetForm,
     openNewMeetingForm,
     togglePrivacyMode,
+    handleDataExport,
+    handleDataImport,
     setShowImportDialog,
     setShowTimeDialog,
-    setFormData
+    setFormData,
+    isDevelopmentMode
   } = useMeetingScheduler();
 
   const scheduleSummary = generateScheduleSummary(meetings);
@@ -104,6 +107,31 @@ return (
           <Upload className="mr-2" size={20} />
           icsファイルをインポート
         </button>
+
+        {/* 開発モード専用のデータバックアップ機能 */}
+        {isDevelopmentMode && (
+          <>
+            <button
+              onClick={handleDataExport}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+              title="全データをJSONファイルにエクスポート"
+            >
+              <FolderDown className="mr-2" size={20} />
+              データエクスポート
+            </button>
+            
+            <label className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center cursor-pointer">
+              <FolderUp className="mr-2" size={20} />
+              データインポート
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleDataImport}
+                className="hidden"
+              />
+            </label>
+          </>
+        )}
       </div>
     </div>
 
