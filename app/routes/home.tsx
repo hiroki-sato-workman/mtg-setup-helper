@@ -792,7 +792,7 @@ return (
             value={formData.notes}
             onChange={(e) => setFormData({...formData, notes: e.target.value})}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
-            rows={2}
+            rows={6}
             placeholder="面談の目的や特記事項など"
           />
         </div>
@@ -1054,7 +1054,7 @@ return (
                       value={meeting.notes}
                       onChange={(e) => updateInlineMeetingField(meeting.id, 'notes', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
-                      rows={2}
+                      rows={6}
                       placeholder="面談の目的や特記事項など"
                     />
                   </div>
