@@ -14,8 +14,11 @@ import type { Meeting, FormData } from '~/types/meeting'
 describe('scheduleUtils', () => {
   describe('timeSlots', () => {
     it('should contain all required time slots', () => {
-      expect(timeSlots).toHaveLength(4)
-      expect(timeSlots.map(slot => slot.value)).toEqual(['allday', 'morning', 'afternoon', 'evening'])
+      expect(timeSlots).toHaveLength(15) // 基本4つ + セパレータ2つ + 1時間単位9つ
+      expect(timeSlots.map(slot => slot.value)).toEqual([
+        'allday', 'separator1', 'morning', 'afternoon', 'evening', 'separator2',
+        '10-11', '11-12', '12-13', '13-14', '14-15', '15-16', '16-17', '17-18', '18-19'
+      ])
     })
 
     it('should have correct labels', () => {
