@@ -15,6 +15,7 @@ export const useMeetingScheduler = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
+  const [inlineEditingData, setInlineEditingData] = useState<Meeting | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [timeDialogData, setTimeDialogData] = useState<TimeDialogData | null>(null);
@@ -106,29 +107,50 @@ export const useMeetingScheduler = () => {
   };
 
   const startInlineEdit = (meetingId: number) => {
-    setInlineEditingId(meetingId);
+    const meeting = meetings.find(m => m.id === meetingId);
+    if (meeting) {
+      setInlineEditingId(meetingId);
+      setInlineEditingData({ ...meeting }); // 編集用の一時データを作成
+    }
   };
 
   const cancelInlineEdit = () => {
     setInlineEditingId(null);
+    setInlineEditingData(null); // 編集用データをクリア
   };
 
-  const saveInlineEdit = (meetingId: number, updatedMeeting: Partial<Meeting>) => {
-    setMeetings(meetings.map(meeting => 
-      meeting.id === meetingId 
-        ? { ...meeting, ...updatedMeeting }
-        : meeting
-    ));
+  const saveInlineEdit = (meetingId: number, updatedMeeting?: Partial<Meeting>) => {
+    // inlineEditingDataを使用して保存、引数のupdatedMeetingは後方互換性のため
+    const dataToSave = updatedMeeting || inlineEditingData;
+    if (dataToSave) {
+      setMeetings(meetings.map(meeting => 
+        meeting.id === meetingId 
+          ? { ...meeting, ...dataToSave }
+          : meeting
+      ));
+    }
     setInlineEditingId(null);
+    setInlineEditingData(null);
     showToast('面談情報を更新しました。', 'success');
   };
 
   const updateInlineMeetingField = (meetingId: number, field: keyof Meeting, value: any) => {
-    setMeetings(meetings.map(meeting => 
-      meeting.id === meetingId 
-        ? { ...meeting, [field]: value }
-        : meeting
-    ));
+    // 編集中の一時データを更新（実際のmeetingsは更新しない）
+    if (inlineEditingData && inlineEditingData.id === meetingId) {
+      setInlineEditingData({ ...inlineEditingData, [field]: value });
+    }
+  };
+
+  const updateInlinePreferredOption = (meetingId: number, index: number, field: 'date' | 'timeSlot', value: string) => {
+    if (inlineEditingData && inlineEditingData.id === meetingId) {
+      const newOptions = [...inlineEditingData.preferredOptions];
+      // 配列が足りない場合は拡張
+      while (newOptions.length <= index) {
+        newOptions.push({ date: '', timeSlot: '' });
+      }
+      newOptions[index] = { ...newOptions[index], [field]: value };
+      setInlineEditingData({ ...inlineEditingData, preferredOptions: newOptions });
+    }
   };
 
   const updateMeetingResult = (meetingId: number, result: string) => {
@@ -350,6 +372,7 @@ export const useMeetingScheduler = () => {
     showForm,
     editingMeeting,
     inlineEditingId,
+    inlineEditingData,
     showImportDialog,
     showTimeDialog,
     timeDialogData,
@@ -366,6 +389,7 @@ export const useMeetingScheduler = () => {
     cancelInlineEdit,
     saveInlineEdit,
     updateInlineMeetingField,
+    updateInlinePreferredOption,
     updateMeetingResult,
     deleteMeeting,
     confirmMeeting,

@@ -17,6 +17,7 @@ const MeetingScheduler = () => {
     showForm,
     editingMeeting,
     inlineEditingId,
+    inlineEditingData,
     showImportDialog,
     showTimeDialog,
     timeDialogData,
@@ -31,6 +32,7 @@ const MeetingScheduler = () => {
     cancelInlineEdit,
     saveInlineEdit,
     updateInlineMeetingField,
+    updateInlinePreferredOption,
     updateMeetingResult,
     deleteMeeting,
     confirmMeeting,
@@ -833,7 +835,10 @@ return (
             <div key={meeting.id} id={`meeting-${meeting.id}`} className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${theme === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
               {inlineEditingId === meeting.id ? (
                 // 編集モード - 登録フォームと同じUI
-                <div>
+                (() => {
+                  const editingData = inlineEditingData || meeting;
+                  return (
+                    <div>
                   <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
                     <User className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
                     面談を編集
@@ -846,16 +851,16 @@ return (
                       </label>
                       <input
                         type="text"
-                        value={meeting.name}
+                        value={editingData.name}
                         onChange={(e) => updateInlineMeetingField(meeting.id, 'name', e.target.value)}
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          !meeting.name.trim() ? 
+                          !editingData.name.trim() ? 
                             (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
                             (theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300')
                         }`}
                         placeholder="面談相手の名前"
                       />
-                      {!meeting.name.trim() && (
+                      {!editingData.name.trim() && (
                         <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>名前は必須です</div>
                       )}
                     </div>
@@ -863,10 +868,10 @@ return (
                     <div>
                       <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>画像（任意）</label>
                       <div className="flex items-center space-x-2">
-                        {meeting.image ? (
+                        {editingData.image ? (
                           <div className="relative">
                             <img 
-                              src={meeting.image} 
+                              src={editingData.image} 
                               alt="プレビュー"
                               className="w-12 h-12 rounded-full object-cover border"
                             />
@@ -910,15 +915,15 @@ return (
                     </label>
                     <div className="space-y-3">
                       {Array.from({ length: 5 }, (_, index) => {
-                        const option = meeting.preferredOptions[index] || { date: '', timeSlot: '' };
+                        const option = editingData.preferredOptions[index] || { date: '', timeSlot: '' };
                         const tempFormData = {
-                          name: meeting.name,
-                          image: meeting.image,
-                          notes: meeting.notes,
-                          meetingType: meeting.meetingType || 'offline',
-                          preferredOptions: meeting.preferredOptions.length >= 5 
-                            ? meeting.preferredOptions 
-                            : [...meeting.preferredOptions, ...Array(5 - meeting.preferredOptions.length).fill({ date: '', timeSlot: '' })]
+                          name: editingData.name,
+                          image: editingData.image,
+                          notes: editingData.notes,
+                          meetingType: editingData.meetingType || 'offline',
+                          preferredOptions: editingData.preferredOptions.length >= 5 
+                            ? editingData.preferredOptions 
+                            : [...editingData.preferredOptions, ...Array(5 - editingData.preferredOptions.length).fill({ date: '', timeSlot: '' })]
                         };
                         const isCurrentSlotOccupied = option.date && option.timeSlot && isSlotOccupied(option.date, option.timeSlot, meetings, meeting, tempFormData, index);
                         
@@ -932,14 +937,7 @@ return (
                                 type="date"
                                 value={option.date}
                                 min={getTodayDate()}
-                                onChange={(e) => {
-                                  const newOptions = [...meeting.preferredOptions];
-                                  while (newOptions.length <= index) {
-                                    newOptions.push({ date: '', timeSlot: '' });
-                                  }
-                                  newOptions[index] = { ...newOptions[index], date: e.target.value };
-                                  updateInlineMeetingField(meeting.id, 'preferredOptions', newOptions);
-                                }}
+                                onChange={(e) => updateInlinePreferredOption(meeting.id, index, 'date', e.target.value)}
                                 className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                   index === 0 && !option.date ? 
                                     (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
@@ -953,14 +951,7 @@ return (
                             <div className="flex-1">
                               <select
                                 value={option.timeSlot}
-                                onChange={(e) => {
-                                  const newOptions = [...meeting.preferredOptions];
-                                  while (newOptions.length <= index) {
-                                    newOptions.push({ date: '', timeSlot: '' });
-                                  }
-                                  newOptions[index] = { ...newOptions[index], timeSlot: e.target.value };
-                                  updateInlineMeetingField(meeting.id, 'preferredOptions', newOptions);
-                                }}
+                                onChange={(e) => updateInlinePreferredOption(meeting.id, index, 'timeSlot', e.target.value)}
                                 className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                   index === 0 && !option.timeSlot ? 
                                     (theme === 'dark' ? 'border-red-500 bg-red-900/20 text-gray-100' : 'border-red-300 bg-red-50') : 
@@ -982,13 +973,13 @@ return (
                                     );
                                   }
                                   const tempFormDataForSlot = {
-                                    name: meeting.name,
-                                    image: meeting.image,
-                                    notes: meeting.notes,
-                                    meetingType: meeting.meetingType || 'offline',
-                                    preferredOptions: meeting.preferredOptions.length >= 5 
-                                      ? meeting.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt)
-                                      : [...meeting.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt), ...Array(Math.max(0, 5 - meeting.preferredOptions.length)).fill({ date: '', timeSlot: '' })]
+                                    name: editingData.name,
+                                    image: editingData.image,
+                                    notes: editingData.notes,
+                                    meetingType: editingData.meetingType || 'offline',
+                                    preferredOptions: editingData.preferredOptions.length >= 5 
+                                      ? editingData.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt)
+                                      : [...editingData.preferredOptions.map((opt, i) => i === index ? { ...opt, timeSlot: slot.value } : opt), ...Array(Math.max(0, 5 - editingData.preferredOptions.length)).fill({ date: '', timeSlot: '' })]
                                   };
                                   const isSlotOccupiedInSelect = option.date && isSlotOccupied(option.date, slot.value, meetings, meeting, tempFormDataForSlot, index);
                                   return (
@@ -1026,7 +1017,7 @@ return (
                           type="radio"
                           name={`meetingType-${meeting.id}`}
                           value="offline"
-                          checked={(meeting.meetingType || 'offline') === 'offline'}
+                          checked={(editingData.meetingType || 'offline') === 'offline'}
                           onChange={(e) => updateInlineMeetingField(meeting.id, 'meetingType', e.target.value as 'online' | 'offline')}
                           className="mr-2"
                         />
@@ -1038,7 +1029,7 @@ return (
                           type="radio"
                           name={`meetingType-${meeting.id}`}
                           value="online"
-                          checked={(meeting.meetingType || 'offline') === 'online'}
+                          checked={(editingData.meetingType || 'offline') === 'online'}
                           onChange={(e) => updateInlineMeetingField(meeting.id, 'meetingType', e.target.value as 'online' | 'offline')}
                           className="mr-2"
                         />
@@ -1051,7 +1042,7 @@ return (
                   <div className="mb-4">
                     <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>備考</label>
                     <textarea
-                      value={meeting.notes}
+                      value={editingData.notes}
                       onChange={(e) => updateInlineMeetingField(meeting.id, 'notes', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
                       rows={6}
@@ -1063,11 +1054,11 @@ return (
                     <button
                       onClick={() => {
                         // 必須項目チェック
-                        if (!meeting.name.trim() || !meeting.preferredOptions[0]?.date || !meeting.preferredOptions[0]?.timeSlot) {
+                        if (!editingData.name.trim() || !editingData.preferredOptions[0]?.date || !editingData.preferredOptions[0]?.timeSlot) {
                           alert('名前と第1希望の日程・時間帯は必須です。');
                           return;
                         }
-                        cancelInlineEdit();
+                        saveInlineEdit(meeting.id);
                       }}
                       className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
                     >
@@ -1080,7 +1071,9 @@ return (
                       キャンセル
                     </button>
                   </div>
-                </div>
+                    </div>
+                  );
+                })()
               ) : (
                 // 閲覧モード
                 <>
