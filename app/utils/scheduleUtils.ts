@@ -302,3 +302,55 @@ export const getFilteredConfirmedMeetings = (meetings: Meeting[], currentTime?: 
       return dateA.getTime() - dateB.getTime();
     });
 };
+
+/**
+ * 確定面談を取得します（過去の面談も含む）
+ * @param meetings 面談情報の配列
+ * @param includePast 過去の面談も含むかどうか
+ * @param currentTime 現在時刻（テスト用、省略時は現在時刻を使用）
+ * @returns 確定面談の配列と過去の面談かどうかの情報
+ */
+export const getAllConfirmedMeetings = (meetings: Meeting[], includePast: boolean = true, currentTime?: Date): Array<Meeting & { isPast: boolean }> => {
+  const now = currentTime || new Date();
+  
+  return meetings
+    .filter(m => m.status === 'confirmed' && m.confirmedDate)
+    .map(meeting => {
+      const meetingDate = new Date(meeting.confirmedDate!);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const meetingDateOnly = new Date(meetingDate.getFullYear(), meetingDate.getMonth(), meetingDate.getDate());
+      
+      let isPast = false;
+      
+      // 過去の日付の場合
+      if (meetingDateOnly < today) {
+        isPast = true;
+      }
+      // 今日の場合で開始時刻が設定されている場合
+      else if (meetingDateOnly.getTime() === today.getTime() && meeting.confirmedStartTime) {
+        const [hour, minute] = meeting.confirmedStartTime.split(':').map(Number);
+        meetingDate.setHours(hour, minute, 0, 0);
+        const oneHourAfterStart = new Date(meetingDate.getTime() + 60 * 60 * 1000);
+        isPast = now >= oneHourAfterStart;
+      }
+      
+      return { ...meeting, isPast };
+    })
+    .filter(meeting => includePast || !meeting.isPast)
+    .sort((a, b) => {
+      // 日時の古い順（昇順）にソート
+      const dateA = new Date(a.confirmedDate!);
+      const dateB = new Date(b.confirmedDate!);
+      
+      if (a.confirmedStartTime) {
+        const [hourA, minuteA] = a.confirmedStartTime.split(':').map(Number);
+        dateA.setHours(hourA, minuteA, 0, 0);
+      }
+      if (b.confirmedStartTime) {
+        const [hourB, minuteB] = b.confirmedStartTime.split(':').map(Number);
+        dateB.setHours(hourB, minuteB, 0, 0);
+      }
+      
+      return dateA.getTime() - dateB.getTime();
+    });
+};

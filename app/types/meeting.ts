@@ -15,6 +15,7 @@ export interface Meeting {
   confirmedEndTime: string;
   status: 'pending' | 'confirmed';
   meetingType?: 'online' | 'offline';
+  meetingResult?: string; // 面談結果・メモ
 }
 
 export interface FormData {

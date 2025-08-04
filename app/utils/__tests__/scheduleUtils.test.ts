@@ -7,7 +7,8 @@ import {
   validateForm,
   isRequired,
   createEmptyFormData,
-  getFilteredConfirmedMeetings
+  getFilteredConfirmedMeetings,
+  getAllConfirmedMeetings
 } from '../scheduleUtils'
 import type { Meeting, FormData } from '~/types/meeting'
 
@@ -58,7 +59,8 @@ describe('scheduleUtils', () => {
         confirmedTimeSlot: '',
         confirmedStartTime: '',
         confirmedEndTime: '',
-        status: 'pending'
+        status: 'pending',
+        meetingResult: ''
       },
       {
         id: 2,
@@ -73,7 +75,8 @@ describe('scheduleUtils', () => {
         confirmedTimeSlot: '',
         confirmedStartTime: '',
         confirmedEndTime: '',
-        status: 'pending'
+        status: 'pending',
+        meetingResult: ''
       }
     ]
 
@@ -130,7 +133,8 @@ describe('scheduleUtils', () => {
           confirmedTimeSlot: '',
           confirmedStartTime: '',
           confirmedEndTime: '',
-          status: 'pending'
+          status: 'pending',
+          meetingResult: ''
         }
       ]
       
@@ -153,7 +157,8 @@ describe('scheduleUtils', () => {
           confirmedTimeSlot: '',
           confirmedStartTime: '',
           confirmedEndTime: '',
-          status: 'pending'
+          status: 'pending',
+          meetingResult: ''
         },
         {
           id: 2,
@@ -167,7 +172,8 @@ describe('scheduleUtils', () => {
           confirmedTimeSlot: '13-14',
           confirmedStartTime: '13:00',
           confirmedEndTime: '14:00',
-          status: 'confirmed'
+          status: 'confirmed',
+          meetingResult: ''
         }
       ]
       
@@ -193,7 +199,8 @@ describe('scheduleUtils', () => {
         confirmedTimeSlot: '',
         confirmedStartTime: '',
         confirmedEndTime: '',
-        status: 'pending'
+        status: 'pending',
+        meetingResult: ''
       }
     ]
 
@@ -391,6 +398,7 @@ describe('scheduleUtils', () => {
       confirmedStartTime: '',
       confirmedEndTime: '',
       status: 'pending',
+      meetingResult: '',
       ...overrides
     });
 
@@ -547,6 +555,100 @@ describe('scheduleUtils', () => {
 
       const result = getFilteredConfirmedMeetings(meetings);
       expect(Array.isArray(result)).toBe(true);
+    });
+  });
+
+  describe('getAllConfirmedMeetings', () => {
+    const createMockMeetingWithResult = (overrides: Partial<Meeting> = {}): Meeting => ({
+      id: 1,
+      name: 'テスト太郎',
+      image: '',
+      notes: '',
+      preferredOptions: [],
+      confirmedDate: '',
+      confirmedTimeSlot: '',
+      confirmedStartTime: '',
+      confirmedEndTime: '',
+      status: 'pending',
+      meetingResult: '',
+      ...overrides
+    });
+
+    it('should return all confirmed meetings with isPast flag', () => {
+      const currentTime = new Date('2024-08-10T12:00:00');
+      const meetings: Meeting[] = [
+        createMockMeetingWithResult({ 
+          id: 1, 
+          name: '過去太郎', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-09',
+          confirmedStartTime: '10:00',
+          confirmedEndTime: '11:00'
+        }),
+        createMockMeetingWithResult({ 
+          id: 2, 
+          name: '未来花子', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-11',
+          confirmedStartTime: '14:00',
+          confirmedEndTime: '15:00'
+        })
+      ];
+
+      const result = getAllConfirmedMeetings(meetings, true, currentTime);
+      expect(result).toHaveLength(2);
+      expect(result[0].isPast).toBe(true);
+      expect(result[1].isPast).toBe(false);
+    });
+
+    it('should filter out past meetings when includePast is false', () => {
+      const currentTime = new Date('2024-08-10T12:00:00');
+      const meetings: Meeting[] = [
+        createMockMeetingWithResult({ 
+          id: 1, 
+          name: '過去太郎', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-09'
+        }),
+        createMockMeetingWithResult({ 
+          id: 2, 
+          name: '未来花子', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-11'
+        })
+      ];
+
+      const result = getAllConfirmedMeetings(meetings, false, currentTime);
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('未来花子');
+      expect(result[0].isPast).toBe(false);
+    });
+
+    it('should mark today meeting as past if 1 hour passed after start time', () => {
+      const currentTime = new Date('2024-08-10T12:00:00');
+      const meetings: Meeting[] = [
+        createMockMeetingWithResult({ 
+          id: 1, 
+          name: '今日過去太郎', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-10',
+          confirmedStartTime: '10:00',
+          confirmedEndTime: '11:00'
+        }),
+        createMockMeetingWithResult({ 
+          id: 2, 
+          name: '今日未来花子', 
+          status: 'confirmed',
+          confirmedDate: '2024-08-10',
+          confirmedStartTime: '13:00',
+          confirmedEndTime: '14:00'
+        })
+      ];
+
+      const result = getAllConfirmedMeetings(meetings, true, currentTime);
+      expect(result).toHaveLength(2);
+      expect(result[0].isPast).toBe(true); // 10:00-11:00 + 1hour = 12:00, current is 12:00
+      expect(result[1].isPast).toBe(false); // 13:00 is future
     });
   });
 })

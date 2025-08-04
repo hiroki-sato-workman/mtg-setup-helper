@@ -59,7 +59,8 @@ describe('useMeetingScheduler', () => {
           confirmedTimeSlot: '',
           confirmedStartTime: '',
           confirmedEndTime: '',
-          status: 'pending'
+          status: 'pending',
+          meetingResult: ''
         }
       ]
       
@@ -487,6 +488,66 @@ describe('useMeetingScheduler', () => {
       
       expect(result.current.showForm).toBe(true)
       expect(result.current.editingMeeting).toBe(null)
+    })
+  })
+
+  describe('meeting result management', () => {
+    it('should update meeting result', () => {
+      const { result } = renderHook(() => useMeetingScheduler())
+      
+      // Add a meeting first
+      act(() => {
+        result.current.setFormData({
+          name: '田中太郎',
+          image: '',
+          notes: '',
+          preferredOptions: [
+            { date: '2024-01-15', timeSlot: 'morning' },
+            { date: '', timeSlot: '' },
+            { date: '', timeSlot: '' },
+            { date: '', timeSlot: '' },
+            { date: '', timeSlot: '' }
+          ]
+        })
+      })
+      
+      act(() => {
+        result.current.addMeeting()
+      })
+      
+      const meetingId = result.current.meetings[0].id
+      
+      // Update meeting result
+      act(() => {
+        result.current.updateMeetingResult(meetingId, 'とても良い面談でした')
+      })
+      
+      expect(result.current.meetings[0].meetingResult).toBe('とても良い面談でした')
+    })
+
+    it('should initialize meeting with empty result', () => {
+      const { result } = renderHook(() => useMeetingScheduler())
+      
+      act(() => {
+        result.current.setFormData({
+          name: '田中太郎',
+          image: '',
+          notes: '',
+          preferredOptions: [
+            { date: '2024-01-15', timeSlot: 'morning' },
+            { date: '', timeSlot: '' },
+            { date: '', timeSlot: '' },
+            { date: '', timeSlot: '' },
+            { date: '', timeSlot: '' }
+          ]
+        })
+      })
+      
+      act(() => {
+        result.current.addMeeting()
+      })
+      
+      expect(result.current.meetings[0].meetingResult).toBe('')
     })
   })
 

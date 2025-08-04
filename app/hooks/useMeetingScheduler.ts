@@ -61,7 +61,8 @@ export const useMeetingScheduler = () => {
               confirmedDate: editingMeeting.confirmedDate || '',
               confirmedTimeSlot: editingMeeting.confirmedTimeSlot || '',
               confirmedStartTime: editingMeeting.confirmedStartTime || '',
-              confirmedEndTime: editingMeeting.confirmedEndTime || ''
+              confirmedEndTime: editingMeeting.confirmedEndTime || '',
+              meetingResult: editingMeeting.meetingResult || ''
             }
           : meeting
       ));
@@ -78,7 +79,8 @@ export const useMeetingScheduler = () => {
         confirmedTimeSlot: '',
         confirmedStartTime: '',
         confirmedEndTime: '',
-        status: 'pending'
+        status: 'pending',
+        meetingResult: ''
       };
       setMeetings([...meetings, newMeeting]);
     }
@@ -124,6 +126,14 @@ export const useMeetingScheduler = () => {
     setMeetings(meetings.map(meeting => 
       meeting.id === meetingId 
         ? { ...meeting, [field]: value }
+        : meeting
+    ));
+  };
+
+  const updateMeetingResult = (meetingId: number, result: string) => {
+    setMeetings(meetings.map(meeting => 
+      meeting.id === meetingId 
+        ? { ...meeting, meetingResult: result }
         : meeting
     ));
   };
@@ -199,7 +209,8 @@ export const useMeetingScheduler = () => {
           confirmedTimeSlot: event.confirmedTimeSlot || '',
           confirmedStartTime: event.confirmedStartTime || '',
           confirmedEndTime: event.confirmedEndTime || '',
-          status: (event.confirmedDate && event.confirmedStartTime && event.confirmedEndTime) ? 'confirmed' : 'pending'
+          status: (event.confirmedDate && event.confirmedStartTime && event.confirmedEndTime) ? 'confirmed' : 'pending',
+          meetingResult: ''
         }));
 
         setMeetings(prevMeetings => [...prevMeetings, ...newMeetings]);
@@ -341,6 +352,7 @@ export const useMeetingScheduler = () => {
     cancelInlineEdit,
     saveInlineEdit,
     updateInlineMeetingField,
+    updateMeetingResult,
     deleteMeeting,
     confirmMeeting,
     finalizeConfirmation,

@@ -1,14 +1,17 @@
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin, Eye, EyeOff, FolderDown, FolderUp } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin, Eye, EyeOff, FolderDown, FolderUp, NotebookPen, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
-import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getDefaultTimeFromSlot } from '~/utils/scheduleUtils';
+import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getAllConfirmedMeetings, getDefaultTimeFromSlot } from '~/utils/scheduleUtils';
 import { renderFormattedText } from '~/utils/textUtils';
 import { getPrivacyIdentifier, getPrivacyColor, getMeetingIdFromSchedule } from '~/utils/privacyUtils';
 
 const MeetingScheduler = () => {
   const { theme, toggleTheme } = useTheme();
+  const [expandedMemos, setExpandedMemos] = useState<Set<number>>(new Set());
+  const [showPastMeetings, setShowPastMeetings] = useState(true);
   const {
     meetings,
     showForm,
@@ -28,6 +31,7 @@ const MeetingScheduler = () => {
     cancelInlineEdit,
     saveInlineEdit,
     updateInlineMeetingField,
+    updateMeetingResult,
     deleteMeeting,
     confirmMeeting,
     finalizeConfirmation,
@@ -51,6 +55,7 @@ const MeetingScheduler = () => {
 
   const scheduleSummary = generateScheduleSummary(meetings);
   const confirmedMeetings = getFilteredConfirmedMeetings(meetings);
+  const allConfirmedMeetings = getAllConfirmedMeetings(meetings, showPastMeetings);
   const allMeetingIds = meetings.map(m => m.id);
 
 return (
@@ -382,13 +387,25 @@ return (
     )}
 
     {/* 確定面談一覧 */}
-    {confirmedMeetings.length > 0 && (
+    {allConfirmedMeetings.length > 0 && (
       <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className={`text-xl font-semibold flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
-            <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
-            確定面談一覧
-          </h2>
+          <div className="flex items-center gap-4">
+            <h2 className={`text-xl font-semibold flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+              <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+              確定面談一覧
+            </h2>
+            <button
+              onClick={() => setShowPastMeetings(!showPastMeetings)}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                showPastMeetings
+                  ? (theme === 'dark' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-100 text-blue-800 hover:bg-blue-200')
+                  : (theme === 'dark' ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+              }`}
+            >
+              {showPastMeetings ? '過去を含む' : '今後のみ'}
+            </button>
+          </div>
           <button
             onClick={() => generateUnifiedIcsFile(meetings, notificationTimes)}
             className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm"
@@ -399,49 +416,114 @@ return (
           </button>
         </div>
         
-        <div className="space-y-3">
-          {confirmedMeetings.map(meeting => (
-            <div key={meeting.id} className={`flex items-center justify-between p-3 rounded-lg border ${theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'}`}>
-              <div className="flex items-center">
-                {privacyMode ? (
-                  <div className={`w-8 h-8 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
-                    <User className="text-white" size={16} />
-                  </div>
-                ) : meeting.image ? (
-                  <img 
-                    src={meeting.image} 
-                    alt={meeting.name}
-                    className="w-8 h-8 rounded-full mr-3 object-cover border"
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-green-500 rounded-full mr-3 flex items-center justify-center">
-                    <User className="text-white" size={16} />
-                  </div>
-                )}
-                <div>
-                  <button 
-                    onClick={() => scrollToMeeting(meeting.id)}
-                    className={`font-medium cursor-pointer hover:underline transition-all text-left ${theme === 'dark' ? 'text-gray-100 hover:text-gray-50' : 'text-gray-800 hover:text-gray-900'}`}
-                  >
-                    {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : meeting.name}
-                  </button>
-                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {formatDate(meeting.confirmedDate!)} 
-                    {meeting.confirmedStartTime && meeting.confirmedEndTime && (
-                      <span className="ml-2">
-                        {meeting.confirmedStartTime} - {meeting.confirmedEndTime}
-                      </span>
-                    )}
-                    {!meeting.confirmedStartTime && meeting.confirmedTimeSlot && (
-                      <span className="ml-2">
-                        ({getTimeSlotLabel(meeting.confirmedTimeSlot)})
-                      </span>
-                    )}
+        <div className="space-y-4">
+          {allConfirmedMeetings.map((meeting: any) => (
+            <div key={meeting.id} className={`p-4 rounded-lg border transition-all ${
+              meeting.isPast 
+                ? (theme === 'dark' ? 'bg-gray-800/50 border-gray-600 opacity-60' : 'bg-gray-100/70 border-gray-300 opacity-70')
+                : (theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200')
+            }`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center">
+                  {privacyMode ? (
+                    <div className={`w-8 h-8 ${getPrivacyColor(meeting.id, allMeetingIds)} rounded-full mr-3 flex items-center justify-center`}>
+                      <User className="text-white" size={16} />
+                    </div>
+                  ) : meeting.image ? (
+                    <img 
+                      src={meeting.image} 
+                      alt={meeting.name}
+                      className="w-8 h-8 rounded-full mr-3 object-cover border"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-green-500 rounded-full mr-3 flex items-center justify-center">
+                      <User className="text-white" size={16} />
+                    </div>
+                  )}
+                  <div>
+                    <button 
+                      onClick={() => scrollToMeeting(meeting.id)}
+                      className={`font-medium cursor-pointer hover:underline transition-all text-left ${theme === 'dark' ? 'text-gray-100 hover:text-gray-50' : 'text-gray-800 hover:text-gray-900'}`}
+                    >
+                      {privacyMode ? getPrivacyIdentifier(meeting.id, allMeetingIds) : meeting.name}
+                    </button>
+                    <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {formatDate(meeting.confirmedDate!)} 
+                      {meeting.confirmedStartTime && meeting.confirmedEndTime && (
+                        <span className="ml-2">
+                          {meeting.confirmedStartTime} - {meeting.confirmedEndTime}
+                        </span>
+                      )}
+                      {!meeting.confirmedStartTime && meeting.confirmedTimeSlot && (
+                        <span className="ml-2">
+                          ({getTimeSlotLabel(meeting.confirmedTimeSlot)})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
+                <div className={`text-sm font-medium px-2 py-1 rounded ${
+                  meeting.isPast 
+                    ? (theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600')
+                    : (theme === 'dark' ? 'bg-green-700 text-green-100' : 'bg-green-100 text-green-800')
+                }`}>
+                  {meeting.isPast ? '完了' : '確定済み'}
+                </div>
               </div>
-              <div className={`text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-green-700 text-green-100' : 'bg-green-100 text-green-800'}`}>
-                確定済み
+              
+              {/* 面談結果セクション */}
+              <div className={`border-t pt-3 ${theme === 'dark' ? 'border-green-800' : 'border-green-300'}`}>
+                <button
+                  onClick={() => {
+                    const newExpanded = new Set(expandedMemos);
+                    if (expandedMemos.has(meeting.id)) {
+                      newExpanded.delete(meeting.id);
+                    } else {
+                      newExpanded.add(meeting.id);
+                    }
+                    setExpandedMemos(newExpanded);
+                  }}
+                  className={`flex items-center w-full hover:bg-opacity-50 rounded p-1 -m-1 transition-colors ${
+                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <NotebookPen className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} size={16} />
+                  <span className={`text-sm font-medium flex-1 text-left ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    面談結果・メモ
+                    {meeting.meetingResult && meeting.meetingResult.trim() && (
+                      <span className={`ml-2 text-xs ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                        (記入済み)
+                      </span>
+                    )}
+                  </span>
+                  {expandedMemos.has(meeting.id) ? (
+                    <ChevronUp className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} size={16} />
+                  ) : (
+                    <ChevronDown className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} size={16} />
+                  )}
+                </button>
+                
+                {expandedMemos.has(meeting.id) && (
+                  <div className="mt-2">
+                    {privacyMode ? (
+                      <div className={`text-sm p-2 rounded ${theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+                        プライバシーモードではメモは非表示です
+                      </div>
+                    ) : (
+                      <textarea
+                        value={meeting.meetingResult || ''}
+                        onChange={(e) => updateMeetingResult(meeting.id, e.target.value)}
+                        placeholder="面談の結果や感想を記入してください..."
+                        className={`w-full p-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                          theme === 'dark' 
+                            ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        rows={3}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
