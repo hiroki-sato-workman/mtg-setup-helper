@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Save, Monitor, MapPin, Eye, EyeOff, FolderDown, FolderUp, NotebookPen, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Monitor, MapPin, Eye, EyeOff, FolderDown, FolderUp, NotebookPen, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
@@ -1237,6 +1237,13 @@ return (
     </div>
   </div>
 );
+};
+
+export const meta = () => {
+  return [
+    { title: "面談・ミーティング調整ツール" },
+    { name: "description", content: "複数の人との面談日程を効率的に調整し、重複を防ぐためのツールです。" },
+  ];
 };
 
 export default MeetingScheduler;
