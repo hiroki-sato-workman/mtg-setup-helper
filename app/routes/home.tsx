@@ -67,6 +67,19 @@ const MeetingScheduler = () => {
     meeting.status === 'pending' && 
     meeting.preferredOptions.filter(option => option.date && option.timeSlot).length === 0
   );
+  
+  // 確定面談を日付でグループ化
+  const groupedConfirmedMeetings = allConfirmedMeetings.reduce((groups: { [key: string]: any[] }, meeting: any) => {
+    const date = meeting.confirmedDate;
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(meeting);
+    return groups;
+  }, {});
+  
+  // 日付をソート（昇順）
+  const sortedDates = Object.keys(groupedConfirmedMeetings).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
   const handleEditMeeting = (meeting: any) => {
     editMeeting(meeting);
@@ -510,13 +523,41 @@ return (
           </button>
         </div>
         
-        <div className="space-y-4">
-          {allConfirmedMeetings.map((meeting: any) => (
-            <div key={meeting.id} className={`p-4 rounded-lg border transition-all ${
-              meeting.isPast 
-                ? (theme === 'dark' ? 'bg-gray-800/50 border-gray-600 opacity-60' : 'bg-gray-100/70 border-gray-300 opacity-70')
-                : (theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200')
-            }`}>
+        <div className="space-y-6">
+          {sortedDates.map(date => {
+            const dayMeetings = groupedConfirmedMeetings[date];
+            const isPastDate = dayMeetings.every((meeting: any) => meeting.isPast);
+            
+            return (
+              <div key={date} className="space-y-3">
+                {/* 日付ヘッダー */}
+                <div className={`flex items-center gap-3 pb-2 border-b ${
+                  theme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+                }`}>
+                  <h3 className={`text-lg font-semibold ${
+                    isPastDate 
+                      ? (theme === 'dark' ? 'text-gray-400' : 'text-gray-500') 
+                      : (theme === 'dark' ? 'text-gray-100' : 'text-gray-800')
+                  }`}>
+                    {formatDate(date)}
+                  </h3>
+                  <span className={`text-sm px-2 py-1 rounded-full ${
+                    isPastDate
+                      ? (theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600')
+                      : (theme === 'dark' ? 'bg-green-800 text-green-300' : 'bg-green-100 text-green-700')
+                  }`}>
+                    {dayMeetings.length}件
+                  </span>
+                </div>
+                
+                {/* その日の面談一覧 */}
+                <div className="space-y-3">
+                  {dayMeetings.map((meeting: any) => (
+                    <div key={meeting.id} className={`p-4 rounded-lg border transition-all ${
+                      meeting.isPast 
+                        ? (theme === 'dark' ? 'bg-gray-800/50 border-gray-600 opacity-60' : 'bg-gray-100/70 border-gray-300 opacity-70')
+                        : (theme === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200')
+                    }`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   {privacyMode ? (
@@ -633,8 +674,12 @@ return (
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     )}
