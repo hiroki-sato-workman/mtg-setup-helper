@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Meeting, FormData, ValidationErrors, TimeDialogData, Toast } from '~/types/meeting';
 import { validateForm, createEmptyFormData } from '~/utils/scheduleUtils';
 import { parseIcsFile } from '~/utils/icsUtils';
-import { exportMeetingData, importMeetingData, isDevelopmentMode } from '~/utils/dataUtils';
+import { exportMeetingData, importMeetingData } from '~/utils/dataUtils';
 
 /**
  * 面談スケジューラーの状態管理とビジネスロジックを提供するカスタムフック
@@ -340,8 +340,6 @@ export const useMeetingScheduler = () => {
   };
 
   const handleDataExport = () => {
-    if (!isDevelopmentMode()) return;
-    
     try {
       exportMeetingData(meetings);
       showToast('データをエクスポートしました', 'success');
@@ -352,8 +350,6 @@ export const useMeetingScheduler = () => {
   };
 
   const handleDataImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isDevelopmentMode()) return;
-    
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -415,9 +411,6 @@ export const useMeetingScheduler = () => {
     // Setters
     setShowImportDialog,
     setShowTimeDialog,
-    setFormData,
-    
-    // Development mode check
-    isDevelopmentMode: isDevelopmentMode()
+    setFormData
   };
 };

@@ -1,12 +1,5 @@
 import type { Meeting } from '~/types/meeting';
 
-/**
- * 開発モードかどうかを判定します
- * @returns 開発モードの場合はtrue
- */
-export const isDevelopmentMode = (): boolean => {
-  return process.env.NODE_ENV === 'development' || import.meta.env.DEV;
-};
 
 /**
  * 面談データをJSONファイルとしてエクスポートします

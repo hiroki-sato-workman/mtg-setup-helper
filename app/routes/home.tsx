@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Monitor, MapPin, Eye, EyeOff, FolderDown, FolderUp, NotebookPen, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Monitor, MapPin, Eye, EyeOff, NotebookPen, ChevronDown, ChevronUp, Settings } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
@@ -7,11 +7,13 @@ import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
 import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getAllConfirmedMeetings, getDefaultTimeFromSlot } from '~/utils/scheduleUtils';
 import { renderFormattedText, formatTextWithLinksAndBreaks } from '~/utils/textUtils';
 import { getPrivacyIdentifier, getPrivacyColor, getMeetingIdFromSchedule } from '~/utils/privacyUtils';
+import { DeveloperToolsDialog } from '~/components/DeveloperTools';
 
 const MeetingScheduler = () => {
   const { theme, toggleTheme } = useTheme();
   const [expandedMemos, setExpandedMemos] = useState<Set<number>>(new Set());
   const [showPastMeetings, setShowPastMeetings] = useState(true);
+  const [showDeveloperTools, setShowDeveloperTools] = useState(false);
   const {
     meetings,
     showForm,
@@ -51,8 +53,7 @@ const MeetingScheduler = () => {
     handleDataImport,
     setShowImportDialog,
     setShowTimeDialog,
-    setFormData,
-    isDevelopmentMode
+    setFormData
   } = useMeetingScheduler();
 
   const scheduleSummary = generateScheduleSummary(meetings);
@@ -74,6 +75,13 @@ return (
         
         {/* テーマ切り替えボタンとプライバシーモード切り替えボタン */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowDeveloperTools(true)}
+            className="theme-toggle"
+            title="開発者ツール（データバックアップ・リストア）"
+          >
+            <Settings />
+          </button>
           <button
             onClick={togglePrivacyMode}
             className="theme-toggle"
@@ -116,30 +124,6 @@ return (
           icsファイルをインポート
         </button>
 
-        {/* 開発モード専用のデータバックアップ機能 */}
-        {isDevelopmentMode && (
-          <>
-            <button
-              onClick={handleDataExport}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
-              title="全データをJSONファイルにエクスポート"
-            >
-              <FolderDown className="mr-2" size={20} />
-              データエクスポート
-            </button>
-            
-            <label className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center cursor-pointer">
-              <FolderUp className="mr-2" size={20} />
-              データインポート
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleDataImport}
-                className="hidden"
-              />
-            </label>
-          </>
-        )}
       </div>
     </div>
 
@@ -1253,6 +1237,15 @@ return (
         </div>
       )}
     </div>
+
+    {/* 開発者ツールダイアログ */}
+    <DeveloperToolsDialog
+      isOpen={showDeveloperTools}
+      theme={theme}
+      onClose={() => setShowDeveloperTools(false)}
+      onDataExport={handleDataExport}
+      onDataImport={handleDataImport}
+    />
 
     {/* Toast通知 */}
     <div className="fixed top-4 right-4 z-50 space-y-2">
