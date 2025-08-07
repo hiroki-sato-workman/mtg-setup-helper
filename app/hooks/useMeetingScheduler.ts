@@ -40,13 +40,12 @@ export const useMeetingScheduler = () => {
     localStorage.setItem('meetingSchedulerData', JSON.stringify(meetings));
   }, [meetings]);
 
-  useEffect(() => {
-    setValidationErrors(validateForm(formData));
-  }, [formData]);
+  // Note: dateTimeModeはhome.tsxで管理されているため、ここでは従来の動作を保持
 
 
-  const addMeeting = () => {
-    if (Object.keys(validationErrors).length > 0) {
+  const addMeeting = (dateTimeMode?: 'scheduled' | 'undetermined') => {
+    const errors = validateForm(formData, dateTimeMode);
+    if (Object.keys(errors).length > 0) {
       alert('入力内容に不備があります。赤い項目を確認してください。');
       return;
     }
@@ -61,7 +60,7 @@ export const useMeetingScheduler = () => {
               notes: formData.notes,
               meetingType: formData.meetingType || editingMeeting.meetingType || 'offline',
               meetingLocation: formData.meetingLocation || '',
-              preferredOptions: formData.preferredOptions.filter(option => option.date && option.timeSlot),
+              preferredOptions: dateTimeMode === 'undetermined' ? [] : formData.preferredOptions.filter(option => option.date && option.timeSlot),
               confirmedDate: editingMeeting.confirmedDate || '',
               confirmedTimeSlot: editingMeeting.confirmedTimeSlot || '',
               confirmedStartTime: editingMeeting.confirmedStartTime || '',
@@ -79,7 +78,7 @@ export const useMeetingScheduler = () => {
         notes: formData.notes,
         meetingType: formData.meetingType || 'offline',
         meetingLocation: formData.meetingLocation || '',
-        preferredOptions: formData.preferredOptions.filter(option => option.date && option.timeSlot),
+        preferredOptions: dateTimeMode === 'undetermined' ? [] : formData.preferredOptions.filter(option => option.date && option.timeSlot),
         confirmedDate: '',
         confirmedTimeSlot: '',
         confirmedStartTime: '',

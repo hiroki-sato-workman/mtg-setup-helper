@@ -276,11 +276,13 @@ describe('scheduleUtils', () => {
       expect(errors.name).toBe('名前は必須です')
     })
 
-    it('should validate first preferred option date', () => {
+    it('should validate date when time slot is provided in scheduled mode', () => {
       const formData: FormData = {
         name: '田中太郎',
         image: '',
         notes: '',
+        meetingType: 'offline',
+        meetingLocation: '',
         preferredOptions: [
           { date: '', timeSlot: 'morning' },
           { date: '', timeSlot: '' },
@@ -290,15 +292,17 @@ describe('scheduleUtils', () => {
         ]
       }
       
-      const errors = validateForm(formData)
-      expect(errors['date_0']).toBe('第1希望の日程は必須です')
+      const errors = validateForm(formData, 'scheduled')
+      expect(errors['date_0']).toBe('時間帯を入力した場合、日程も必須です')
     })
 
-    it('should validate first preferred option time slot', () => {
+    it('should validate time slot when date is provided in scheduled mode', () => {
       const formData: FormData = {
         name: '田中太郎',
         image: '',
         notes: '',
+        meetingType: 'offline',
+        meetingLocation: '',
         preferredOptions: [
           { date: '2024-01-15', timeSlot: '' },
           { date: '', timeSlot: '' },
@@ -308,8 +312,8 @@ describe('scheduleUtils', () => {
         ]
       }
       
-      const errors = validateForm(formData)
-      expect(errors['timeSlot_0']).toBe('第1希望の時間帯は必須です')
+      const errors = validateForm(formData, 'scheduled')
+      expect(errors['timeSlot_0']).toBe('日程を入力した場合、時間帯も必須です')
     })
 
     it('should return empty object for valid form', () => {
@@ -347,14 +351,53 @@ describe('scheduleUtils', () => {
       const errors = validateForm(formData)
       expect(errors.name).toBe('名前は必須です')
     })
+
+    it('should skip date/time validation in undetermined mode', () => {
+      const formData: FormData = {
+        name: '田中太郎',
+        image: '',
+        notes: '',
+        meetingType: 'offline',
+        meetingLocation: '',
+        preferredOptions: [
+          { date: '', timeSlot: 'morning' }, // 時間帯だけあっても未定モードなのでエラーなし
+          { date: '', timeSlot: '' },
+          { date: '', timeSlot: '' },
+          { date: '', timeSlot: '' },
+          { date: '', timeSlot: '' }
+        ]
+      }
+      
+      const errors = validateForm(formData, 'undetermined')
+      expect(Object.keys(errors)).toHaveLength(0) // エラーなし
+    })
+
+    it('should validate only name in undetermined mode', () => {
+      const formData: FormData = {
+        name: '',
+        image: '',
+        notes: '',
+        meetingType: 'offline',
+        meetingLocation: '',
+        preferredOptions: [
+          { date: '2024-01-15', timeSlot: 'morning' },
+          { date: '', timeSlot: '' },
+          { date: '', timeSlot: '' },
+          { date: '', timeSlot: '' },
+          { date: '', timeSlot: '' }
+        ]
+      }
+      
+      const errors = validateForm(formData, 'undetermined')
+      expect(errors.name).toBe('名前は必須です')
+      expect(errors['date_0']).toBeUndefined() // 日程のエラーはなし
+      expect(errors['timeSlot_0']).toBeUndefined() // 時間帯のエラーはなし
+    })
   })
 
   describe('isRequired', () => {
-    it('should return true for first option (index 0)', () => {
-      expect(isRequired(0)).toBe(true)
-    })
-
-    it('should return false for other options', () => {
+    it('should return false for all options (日時未定対応)', () => {
+      expect(isRequired(0)).toBe(false)
       expect(isRequired(1)).toBe(false)
       expect(isRequired(2)).toBe(false)
       expect(isRequired(3)).toBe(false)

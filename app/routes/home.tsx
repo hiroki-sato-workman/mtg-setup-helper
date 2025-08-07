@@ -4,7 +4,7 @@ import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
-import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getAllConfirmedMeetings, getDefaultTimeFromSlot } from '~/utils/scheduleUtils';
+import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getAllConfirmedMeetings, getDefaultTimeFromSlot, validateForm } from '~/utils/scheduleUtils';
 import { renderFormattedText, formatTextWithLinksAndBreaks } from '~/utils/textUtils';
 import { getPrivacyIdentifier, getPrivacyColor, getMeetingIdFromSchedule } from '~/utils/privacyUtils';
 import { DeveloperToolsDialog } from '~/components/DeveloperTools';
@@ -14,6 +14,7 @@ const MeetingScheduler = () => {
   const [expandedMemos, setExpandedMemos] = useState<Set<number>>(new Set());
   const [showPastMeetings, setShowPastMeetings] = useState(true);
   const [showDeveloperTools, setShowDeveloperTools] = useState(false);
+  const [dateTimeMode, setDateTimeMode] = useState<'scheduled' | 'undetermined'>('scheduled');
   const {
     meetings,
     showForm,
@@ -60,6 +61,24 @@ const MeetingScheduler = () => {
   const confirmedMeetings = getFilteredConfirmedMeetings(meetings);
   const allConfirmedMeetings = getAllConfirmedMeetings(meetings, showPastMeetings);
   const allMeetingIds = meetings.map(m => m.id);
+  
+  // 日時未定の面談を取得
+  const undeterminedMeetings = meetings.filter(meeting => 
+    meeting.status === 'pending' && 
+    meeting.preferredOptions.filter(option => option.date && option.timeSlot).length === 0
+  );
+
+  const handleEditMeeting = (meeting: any) => {
+    editMeeting(meeting);
+    // 編集時の日時モードを設定
+    const hasScheduledOptions = meeting.preferredOptions.some((option: any) => option.date && option.timeSlot);
+    setDateTimeMode(hasScheduledOptions ? 'scheduled' : 'undetermined');
+  };
+
+  const handleOpenNewMeetingForm = () => {
+    setDateTimeMode('scheduled');
+    openNewMeetingForm();
+  };
 
 return (
   <div className={`max-w-6xl mx-auto p-0 md:p-6 min-h-screen transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -109,7 +128,7 @@ return (
       
       <div className="flex gap-4">
         <button
-          onClick={openNewMeetingForm}
+          onClick={handleOpenNewMeetingForm}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
         >
           <Plus className="mr-2" size={20} />
@@ -128,7 +147,7 @@ return (
     </div>
 
     {/* 予定サマリー */}
-    {Object.keys(scheduleSummary).length > 0 && (
+    {(Object.keys(scheduleSummary).length > 0 || undeterminedMeetings.length > 0) && (
       <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-xl font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
           <Users className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
@@ -136,6 +155,7 @@ return (
         </h2>
         
         {/* 一覧表示 */}
+        {Object.keys(scheduleSummary).length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -340,6 +360,94 @@ return (
             </tbody>
           </table>
         </div>
+        )}
+
+        {/* 日時未定の面談一覧 */}
+        {undeterminedMeetings.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <h3 className={`text-lg font-semibold mb-3 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+              <FileText className={`mr-2 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`} size={18} />
+              日時未定の面談 ({undeterminedMeetings.length}件)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {undeterminedMeetings.map(meeting => {
+                const meetingId = meeting.id;
+                return (
+                  <div
+                    key={meeting.id}
+                    className={`p-3 rounded-lg border transition-all hover:shadow-md ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
+                        : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 relative">
+                        {privacyMode ? (
+                          <div
+                            className={`w-8 h-8 ${getPrivacyColor(meetingId, allMeetingIds)} rounded-full flex items-center justify-center`}
+                            title={getPrivacyIdentifier(meetingId, allMeetingIds)}
+                          >
+                            <User className="text-white" size={16} />
+                          </div>
+                        ) : meeting.image ? (
+                          <img 
+                            src={meeting.image} 
+                            alt={meeting.name}
+                            className="w-8 h-8 rounded-full object-cover border"
+                            title={meeting.name}
+                          />
+                        ) : (
+                          <div 
+                            className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center"
+                            title={meeting.name}
+                          >
+                            <User className="text-white" size={16} />
+                          </div>
+                        )}
+                        {/* オンライン・オフラインアイコン */}
+                        <div className="absolute -bottom-0.5 -right-1">
+                          {(meeting.meetingType || 'offline') === 'online' ? (
+                            <Monitor className="w-4 h-4 text-cyan-500 bg-white rounded-full p-0.5 border border-gray-200" size={14} />
+                          ) : (
+                            <MapPin className="w-4 h-4 text-orange-600 bg-white rounded-full p-0.5 border border-gray-200" size={14} />
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <button 
+                          onClick={() => scrollToMeeting(meetingId)}
+                          className={`font-medium text-sm hover:underline cursor-pointer transition-colors ${theme === 'dark' ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-800'}`}
+                        >
+                          {privacyMode ? getPrivacyIdentifier(meetingId, allMeetingIds) : meeting.name}
+                        </button>
+                        <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          日時未定
+                        </div>
+                        {meeting.notes && (
+                          <div className={`text-xs mt-1 truncate ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                            {meeting.notes.length > 30 ? `${meeting.notes.substring(0, 30)}...` : meeting.notes}
+                          </div>
+                        )}
+                        {meeting.meetingLocation && (
+                          <div className={`text-xs mt-1 flex items-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <MapPin size={10} className="mr-1" />
+                            <span className="truncate">
+                              {formatTextWithLinksAndBreaks(meeting.meetingLocation).length > 20 
+                                ? `${meeting.meetingLocation.substring(0, 20)}...` 
+                                : meeting.meetingLocation
+                              }
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* 凡例 */}
         <div className="mt-4 flex flex-wrap gap-4 text-xs">
@@ -681,10 +789,42 @@ return (
 
         <div className="mb-4">
           <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-            希望日程と時間帯（第1希望は必須）
+            面談日時の設定
           </label>
-          <div className="space-y-3">
-            {formData.preferredOptions.map((option, index) => (
+          <div className="mb-3">
+            <div className="flex gap-6">
+              <label className={`flex items-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                <input
+                  type="radio"
+                  name="dateTimeMode"
+                  value="scheduled"
+                  checked={dateTimeMode === 'scheduled'}
+                  onChange={(e) => setDateTimeMode(e.target.value as 'scheduled' | 'undetermined')}
+                  className="mr-2"
+                />
+                希望日時を指定する
+              </label>
+              <label className={`flex items-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                <input
+                  type="radio"
+                  name="dateTimeMode"
+                  value="undetermined"
+                  checked={dateTimeMode === 'undetermined'}
+                  onChange={(e) => setDateTimeMode(e.target.value as 'scheduled' | 'undetermined')}
+                  className="mr-2"
+                />
+                日時未定
+              </label>
+            </div>
+          </div>
+          
+          {dateTimeMode === 'scheduled' && (
+            <>
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                希望日程と時間帯
+              </label>
+              <div className="space-y-3">
+                {formData.preferredOptions.map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <div className="w-16 text-sm font-medium text-gray-600">
                   第{index + 1}希望{isRequired(index) ? ' *' : ''}
@@ -754,6 +894,8 @@ return (
               </div>
             ))}
           </div>
+              </>
+            )}
         </div>
 
         <div className="mb-4">
@@ -812,10 +954,10 @@ return (
 
         <div className="flex gap-2">
           <button
-            onClick={addMeeting}
-            disabled={Object.keys(validationErrors).length > 0}
+            onClick={() => addMeeting(dateTimeMode)}
+            disabled={Object.keys(validateForm(formData, dateTimeMode)).length > 0}
             className={`px-4 py-2 rounded-md transition-colors ${
-              Object.keys(validationErrors).length > 0
+              Object.keys(validateForm(formData, dateTimeMode)).length > 0
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-700'
             }`}
@@ -922,10 +1064,48 @@ return (
 
                   <div className="mb-4">
                     <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                      希望日程と時間帯（第1希望は必須）
+                      面談日時の設定
                     </label>
-                    <div className="space-y-3">
-                      {Array.from({ length: 5 }, (_, index) => {
+                    <div className="mb-3">
+                      <div className="flex gap-6">
+                        <label className={`flex items-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <input
+                            type="radio"
+                            name={`dateTimeMode-${meeting.id}`}
+                            value="scheduled"
+                            checked={editingData.preferredOptions.some((opt: any) => opt.date && opt.timeSlot)}
+                            onChange={() => {
+                              // 日時指定モードに切り替える時、既存のデータは保持
+                            }}
+                            className="mr-2"
+                          />
+                          希望日時を指定する
+                        </label>
+                        <label className={`flex items-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <input
+                            type="radio"
+                            name={`dateTimeMode-${meeting.id}`}
+                            value="undetermined"
+                            checked={!editingData.preferredOptions.some((opt: any) => opt.date && opt.timeSlot)}
+                            onChange={() => {
+                              // 日時未定モードに切り替える時、日時をクリア
+                              const clearedOptions = Array(5).fill({ date: '', timeSlot: '' });
+                              updateInlineMeetingField(meeting.id, 'preferredOptions', clearedOptions);
+                            }}
+                            className="mr-2"
+                          />
+                          日時未定
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {editingData.preferredOptions.some((opt: any) => opt.date && opt.timeSlot) && (
+                      <>
+                        <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                          希望日程と時間帯
+                        </label>
+                        <div className="space-y-3">
+                          {Array.from({ length: 5 }, (_, index) => {
                         const option = editingData.preferredOptions[index] || { date: '', timeSlot: '' };
                         const tempFormData = {
                           name: editingData.name,
@@ -1017,7 +1197,9 @@ return (
                           </div>
                         );
                       })}
-                    </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="mb-4">
@@ -1078,10 +1260,24 @@ return (
                     <button
                       onClick={() => {
                         // 必須項目チェック
-                        if (!editingData.name.trim() || !editingData.preferredOptions[0]?.date || !editingData.preferredOptions[0]?.timeSlot) {
-                          alert('名前と第1希望の日程・時間帯は必須です。');
+                        if (!editingData.name.trim()) {
+                          alert('名前は必須です。');
                           return;
                         }
+                        
+                        // 日時指定モードの場合のみ日程・時間帯をチェック
+                        const hasScheduledOptions = editingData.preferredOptions.some((opt: any) => opt.date && opt.timeSlot);
+                        if (hasScheduledOptions) {
+                          // 日時が一部だけ入力されている場合のエラーチェック
+                          const hasPartialEntry = editingData.preferredOptions.some((opt: any) => 
+                            (opt.date && !opt.timeSlot) || (!opt.date && opt.timeSlot)
+                          );
+                          if (hasPartialEntry) {
+                            alert('日程と時間帯は両方入力してください。');
+                            return;
+                          }
+                        }
+                        
                         saveInlineEdit(meeting.id);
                       }}
                       className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
@@ -1185,10 +1381,15 @@ return (
                         希望日程（クリックで確定）:
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      {meeting.preferredOptions
-                        .filter(option => option.date && option.timeSlot)
-                        .map((option, index) => (
+                    {meeting.preferredOptions.filter(option => option.date && option.timeSlot).length === 0 ? (
+                      <div className={`text-sm p-3 rounded border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                        日時未定
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        {meeting.preferredOptions
+                          .filter(option => option.date && option.timeSlot)
+                          .map((option, index) => (
                           <div key={index} className="relative">
                             <button
                               onClick={() => confirmMeeting(meeting.id, option.date, option.timeSlot)}
@@ -1209,7 +1410,8 @@ return (
                             </button>
                           </div>
                         ))}
-                    </div>
+                      </div>
+                    )}
                     
                     {meeting.status === 'confirmed' && meeting.confirmedDate && meeting.confirmedTimeSlot && (
                       <div className={`mt-3 p-3 rounded text-sm flex justify-between items-center ${theme === 'dark' ? 'bg-green-900/20 border border-green-700' : 'bg-green-50 border border-green-200'}`}>

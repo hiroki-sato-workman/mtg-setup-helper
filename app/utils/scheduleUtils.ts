@@ -173,22 +173,32 @@ export const isSlotOccupied = (
 /**
  * フォームデータのバリデーションを実行します
  * @param formData 検証するフォームデータ
+ * @param dateTimeMode 日時モード（'scheduled' | 'undetermined'）
  * @returns エラー情報のオブジェクト（エラーがない場合は空オブジェクト）
  * @example
- * validateForm(formData) // → { name: '名前は必須です' } または {}
+ * validateForm(formData, 'scheduled') // → { name: '名前は必須です' } または {}
  */
-export const validateForm = (formData: FormData): ValidationErrors => {
+export const validateForm = (formData: FormData, dateTimeMode?: 'scheduled' | 'undetermined'): ValidationErrors => {
   const errors: ValidationErrors = {};
   
   if (!formData.name.trim()) {
     errors.name = '名前は必須です';
   }
   
-  if (!formData.preferredOptions[0].date) {
-    errors[`date_0`] = `第1希望の日程は必須です`;
+  // 日時未定モードの場合は日程・時間帯のバリデーションをスキップ
+  if (dateTimeMode === 'undetermined') {
+    return errors;
   }
-  if (!formData.preferredOptions[0].timeSlot) {
-    errors[`timeSlot_0`] = `第1希望の時間帯は必須です`;
+  
+  // 第1希望に日程または時間帯が入力されている場合は、両方必須とする
+  const hasFirstDate = formData.preferredOptions[0].date;
+  const hasFirstTimeSlot = formData.preferredOptions[0].timeSlot;
+  
+  if (hasFirstDate && !hasFirstTimeSlot) {
+    errors[`timeSlot_0`] = `日程を入力した場合、時間帯も必須です`;
+  }
+  if (hasFirstTimeSlot && !hasFirstDate) {
+    errors[`date_0`] = `時間帯を入力した場合、日程も必須です`;
   }
   
   return errors;
@@ -197,12 +207,12 @@ export const validateForm = (formData: FormData): ValidationErrors => {
 /**
  * 指定されたインデックスの項目が必須かどうかを判定します
  * @param index チェックする項目のインデックス（0始まり）
- * @returns 必須の場合はtrue（現在は第1希望のみ必須）
+ * @returns 必須の場合はtrue（現在はすべて任意）
  * @example
- * isRequired(0) // → true（第1希望は必須）
- * isRequired(1) // → false（第2希望以降は任意）
+ * isRequired(0) // → false（第1希望も任意、日時未定可）
+ * isRequired(1) // → false（第2希望以降も任意）
  */
-export const isRequired = (index: number) => index < 1;
+export const isRequired = (index: number) => false;
 
 /**
  * 空のフォームデータオブジェクトを作成します
