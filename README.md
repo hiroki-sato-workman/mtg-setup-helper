@@ -1,87 +1,128 @@
-# Welcome to React Router!
+# 面談・ミーティング調整ツール (MTG Setup Helper)
 
-A modern, production-ready template for building full-stack React applications using React Router.
+複数の人との面談日程を効率的に調整し、重複を防ぐためのReactアプリケーションです。React Router v7を使用して構築されています。
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## 主な機能
 
-## Features
+- 📅 面談者の登録と希望日程の管理
+- ⏰ 時間帯重複の検出とアラート表示
+- ✅ 面談確定機能（詳細時刻設定）
+- 📋 スケジュールサマリー表示
+- 📱 モバイル対応のレスポンシブデザイン
+- 🌙 ダークモード対応
+- 🔒 プライバシーモード（面談者情報の匿名化）
+- 📁 .icsファイルのインポート/エクスポート
+- 💾 ローカルストレージでのデータ永続化
+- 📝 面談結果・メモ機能
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## 始め方
 
-## Getting Started
+### インストール
 
-### Installation
-
-Install the dependencies:
+依存関係をインストール：
 
 ```bash
 npm install
 ```
 
-### Development
+### 開発
 
-Start the development server with HMR:
+HMR付きの開発サーバーを起動：
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+アプリケーションは `http://localhost:5173` で利用可能になります。
 
-## Building for Production
+## 本番環境用ビルド
 
-Create a production build:
+本番環境用ビルドを作成：
 
 ```bash
 npm run build
 ```
 
-## Deployment
+## デプロイメント
 
-### Docker Deployment
+### GitHub Pages (自動デプロイ)
 
-To build and run using Docker:
+このプロジェクトは、`main`ブランチにマージされたコードが自動的にGitHub Pagesにデプロイされるように設定されています。
+
+#### 自動デプロイの仕組み
+
+1. `main`ブランチへのpushまたはマージ
+2. GitHub Actionsが自動実行
+3. テスト・タイプチェック・ビルドを実行
+4. GitHub Pagesにデプロイ
+
+#### GitHub Pages設定
+
+- SPAモード (`ssr: false`) で設定済み
+- 404.htmlリダイレクトでクライアントサイドルーティングをサポート
+- `.nojekyll`ファイルでJekyll処理を無効化
+
+#### 手動ビルド（GitHub Pages用）
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+npm run build:pages
+mkdir -p docs
+cp -r build/client/* docs/
+cp docs/index.html docs/404.html
+touch docs/.nojekyll
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+手動デプロイの場合は、GitHubリポジトリの設定で「Source」を「Deploy from a branch」に設定し、「main」ブランチの「/ (root)」ではなく「/docs」フォルダを選択してください。
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+### Dockerデプロイメント
 
-### DIY Deployment
+Dockerを使用してビルドと実行：
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
+```bash
+docker build -t mtg-setup-helper .
 
-Make sure to deploy the output of `npm run build`
+# コンテナを実行
+docker run -p 3000:3000 mtg-setup-helper
+```
+
+### 独自デプロイメント
+
+Nodeアプリケーションのデプロイに慣れている場合、内蔵のアプリサーバーは本番環境対応です。
+
+`npm run build` の出力をデプロイしてください：
 
 ```
 ├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
+├── package-lock.json (または pnpm-lock.yaml、bun.lockb)
 ├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+│   ├── client/    # 静的アセット
+│   └── server/    # サーバーサイドコード
 ```
 
-## Styling
+## 技術スタック
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+- **フレームワーク**: React Router (SPA mode)
+- **スタイリング**: TailwindCSS
+- **言語**: TypeScript
+- **ビルドツール**: Vite
+- **テスト**: Vitest + Testing Library
+- **デプロイ**: GitHub Pages + GitHub Actions
+- **アイコン**: Lucide React
 
----
+## 開発
 
-Built with ❤️ using React Router.
+### テスト実行
+
+```bash
+# 単体テスト
+npm test
+
+# カバレッジ付きテスト  
+npm run test:coverage
+```
+
+### 型チェック
+
+```bash
+npm run typecheck
+```
