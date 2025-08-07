@@ -35,6 +35,7 @@ export const generateIcsFile = (meeting: Meeting, notificationTimes: number[]) =
     `DTEND:${formatIcsDate(endTime)}`,
     `SUMMARY:${(meeting.meetingType || 'offline') === 'online' ? '[オンライン] ' : '[対面] '}面談 ${meeting.name}`,
     `DESCRIPTION:${meeting.notes ? meeting.notes.replace(/\n/g, '\\n') : '面談の予定'}`,
+    ...(meeting.meetingLocation ? [`LOCATION:${meeting.meetingLocation.replace(/\n/g, '\\n')}`] : []),
     'STATUS:CONFIRMED',
     alarms,
     'END:VEVENT',
@@ -94,6 +95,7 @@ export const generateUnifiedIcsFile = (meetings: Meeting[], notificationTimes: n
       `DTEND:${formatIcsDate(endTime)}`,
       `SUMMARY:${(meeting.meetingType || 'offline') === 'online' ? '[オンライン] ' : '[対面] '}面談 ${meeting.name}`,
       `DESCRIPTION:${meeting.notes ? meeting.notes.replace(/\n/g, '\\n') : '面談の予定'}`,
+      ...(meeting.meetingLocation ? [`LOCATION:${meeting.meetingLocation.replace(/\n/g, '\\n')}`] : []),
       'STATUS:CONFIRMED',
       alarms,
       'END:VEVENT'

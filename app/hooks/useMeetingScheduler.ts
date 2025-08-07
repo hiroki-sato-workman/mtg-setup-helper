@@ -59,6 +59,8 @@ export const useMeetingScheduler = () => {
               name: formData.name,
               image: formData.image,
               notes: formData.notes,
+              meetingType: formData.meetingType || editingMeeting.meetingType || 'offline',
+              meetingLocation: formData.meetingLocation || '',
               preferredOptions: formData.preferredOptions.filter(option => option.date && option.timeSlot),
               confirmedDate: editingMeeting.confirmedDate || '',
               confirmedTimeSlot: editingMeeting.confirmedTimeSlot || '',
@@ -76,6 +78,7 @@ export const useMeetingScheduler = () => {
         image: formData.image,
         notes: formData.notes,
         meetingType: formData.meetingType || 'offline',
+        meetingLocation: formData.meetingLocation || '',
         preferredOptions: formData.preferredOptions.filter(option => option.date && option.timeSlot),
         confirmedDate: '',
         confirmedTimeSlot: '',
@@ -98,6 +101,7 @@ export const useMeetingScheduler = () => {
       image: meeting.image,
       notes: meeting.notes,
       meetingType: meeting.meetingType || 'offline',
+      meetingLocation: meeting.meetingLocation || '',
       preferredOptions: [
         ...meeting.preferredOptions,
         ...Array(5 - meeting.preferredOptions.length).fill({ date: '', timeSlot: '' })

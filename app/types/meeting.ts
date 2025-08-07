@@ -15,6 +15,7 @@ export interface Meeting {
   confirmedEndTime: string;
   status: 'pending' | 'confirmed';
   meetingType?: 'online' | 'offline';
+  meetingLocation?: string; // オンライン: URL、対面: 会議室情報等
   meetingResult?: string; // 面談結果・メモ
 }
 
@@ -24,6 +25,7 @@ export interface FormData {
   notes: string;
   preferredOptions: PreferredOption[];
   meetingType?: 'online' | 'offline';
+  meetingLocation?: string; // オンライン: URL、対面: 会議室情報等
 }
 
 export interface ValidationErrors {
@@ -44,6 +46,7 @@ export interface Schedule {
   priority: number;
   notes: string;
   meetingType?: 'online' | 'offline';
+  meetingLocation?: string;
 }
 
 export interface Toast {

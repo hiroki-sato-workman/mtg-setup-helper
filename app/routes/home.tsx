@@ -5,7 +5,7 @@ import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
 import { formatDate, formatDateShort, getTodayDate } from '~/utils/dateUtils';
 import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, isRequired, getFilteredConfirmedMeetings, getAllConfirmedMeetings, getDefaultTimeFromSlot } from '~/utils/scheduleUtils';
-import { renderFormattedText } from '~/utils/textUtils';
+import { renderFormattedText, formatTextWithLinksAndBreaks } from '~/utils/textUtils';
 import { getPrivacyIdentifier, getPrivacyColor, getMeetingIdFromSchedule } from '~/utils/privacyUtils';
 
 const MeetingScheduler = () => {
@@ -462,6 +462,20 @@ return (
                         </span>
                       )}
                     </div>
+                    {meeting.meetingLocation && (
+                      <div className={`text-sm mt-1 flex items-start ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {(meeting.meetingType || 'offline') === 'online' ? (
+                          <Monitor className="mr-1 text-cyan-500 mt-0.5 flex-shrink-0" size={14} />
+                        ) : (
+                          <MapPin className="mr-1 text-orange-600 mt-0.5 flex-shrink-0" size={14} />
+                        )}
+                        <div>
+                          {privacyMode ? '場所情報は非表示です' : (
+                            <>{formatTextWithLinksAndBreaks(meeting.meetingLocation, theme === 'dark')}</>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className={`text-sm font-medium px-2 py-1 rounded ${
@@ -789,6 +803,19 @@ return (
         </div>
 
         <div className="mb-4">
+          <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            場所・URL
+          </label>
+          <input
+            type="text"
+            value={formData.meetingLocation || ''}
+            onChange={(e) => setFormData({...formData, meetingLocation: e.target.value})}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
+            placeholder={(formData.meetingType || 'offline') === 'online' ? 'Zoom URL、Google Meet リンクなど' : '会議室名、住所、待ち合わせ場所など'}
+          />
+        </div>
+
+        <div className="mb-4">
           <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>備考</label>
           <textarea
             value={formData.notes}
@@ -1040,6 +1067,19 @@ return (
                   </div>
 
                   <div className="mb-4">
+                    <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      場所・URL
+                    </label>
+                    <input
+                      type="text"
+                      value={editingData.meetingLocation || ''}
+                      onChange={(e) => updateInlineMeetingField(meeting.id, 'meetingLocation', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'border-gray-300'}`}
+                      placeholder={(editingData.meetingType || 'offline') === 'online' ? 'Zoom URL、Google Meet リンクなど' : '会議室名、住所、待ち合わせ場所など'}
+                    />
+                  </div>
+
+                  <div className="mb-4">
                     <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>備考</label>
                     <textarea
                       value={editingData.notes}
@@ -1098,15 +1138,24 @@ return (
                         </h3>
                       </div>
                       
-                      <div className="flex items-center mb-2">
-                        {(meeting.meetingType || 'offline') === 'online' ? (
-                          <Monitor className="mr-2 text-cyan-500" size={16} />
-                        ) : (
-                          <MapPin className="mr-2 text-orange-600" size={16} />
+                      <div className="mb-2">
+                        <div className="flex items-center">
+                          {(meeting.meetingType || 'offline') === 'online' ? (
+                            <Monitor className="mr-2 text-cyan-500" size={16} />
+                          ) : (
+                            <MapPin className="mr-2 text-orange-600" size={16} />
+                          )}
+                          <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {(meeting.meetingType || 'offline') === 'online' ? 'オンライン' : '対面'}
+                          </span>
+                        </div>
+                        {meeting.meetingLocation && (
+                          <div className={`text-sm mt-1 ml-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                            {privacyMode ? '場所情報は非表示です' : (
+                              <>{formatTextWithLinksAndBreaks(meeting.meetingLocation, theme === 'dark')}</>
+                            )}
+                          </div>
                         )}
-                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {(meeting.meetingType || 'offline') === 'online' ? 'オンライン' : '対面'}
-                        </span>
                       </div>
                       
                       {meeting.notes && (

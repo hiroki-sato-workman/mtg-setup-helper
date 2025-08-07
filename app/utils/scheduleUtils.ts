@@ -58,7 +58,8 @@ export const generateScheduleSummary = (meetings: Meeting[]): { [key: string]: S
           meetingImage: meeting.image,
           priority: index + 1,
           notes: meeting.notes,
-          meetingType: meeting.meetingType
+          meetingType: meeting.meetingType,
+          meetingLocation: meeting.meetingLocation
         });
       }
     });
@@ -214,6 +215,7 @@ export const createEmptyFormData = (): FormData => ({
   image: '',
   notes: '',
   meetingType: 'offline',
+  meetingLocation: '',
   preferredOptions: [
     { date: '', timeSlot: '' },
     { date: '', timeSlot: '' },
