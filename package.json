@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "build:pages": "NODE_ENV=production react-router build",
-    "build:docs": "NODE_ENV=production react-router build && mkdir -p docs && cp -r build/client/* docs/ && cp docs/index.html docs/404.html && touch docs/.nojekyll",
+    "build:docs": "NODE_ENV=production VITE_BASE_PATH=/mtg-setup-helper/ react-router build && mkdir -p docs && cp -r build/client/* docs/ && cp docs/index.html docs/404.html && touch docs/.nojekyll",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
