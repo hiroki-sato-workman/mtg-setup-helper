@@ -4,6 +4,3 @@
 # React Router
 /.react-router/
 /build/
-
-# GitHub Pages deployment files
-/docs/
