@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Monitor, MapPin, Eye, EyeOff, NotebookPen, ChevronDown, ChevronUp, Settings, Play } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, MapPin, NotebookPen, ChevronDown, ChevronUp, Monitor } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
@@ -8,6 +8,7 @@ import { timeSlots, getTimeSlotLabel, generateScheduleSummary, isSlotOccupied, i
 import { renderFormattedText, formatTextWithLinksAndBreaks } from '~/utils/textUtils';
 import { getPrivacyIdentifier, getPrivacyColor, getMeetingIdFromSchedule } from '~/utils/privacyUtils';
 import { DeveloperToolsDialog } from '~/components/DeveloperTools';
+import { ActionDrawer } from '~/components/ActionDrawer';
 
 const MeetingScheduler = () => {
   const { theme, toggleTheme } = useTheme();
@@ -119,47 +120,19 @@ return (
           </p>
         </div>
         
-        {/* テーマ切り替えボタンとプライバシーモード切り替えボタン */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowDeveloperTools(true)}
-            className="theme-toggle"
-            title="開発者ツール（データバックアップ・リストア）"
-          >
-            <Settings />
-          </button>
-          <button
-            onClick={toggleDemoMode}
-            className={`theme-toggle ${isDemoMode ? 'bg-green-600 text-white hover:bg-green-700' : ''}`}
-            title={`デモモード: ${isDemoMode ? 'ON（サンプルデータを表示）' : 'OFF（実際のデータを表示）'}`}
-          >
-            <Play />
-          </button>
-          <button
-            onClick={togglePrivacyMode}
-            className="theme-toggle"
-            title={`プライバシーモード: ${privacyMode ? 'ON（情報を隠す）' : 'OFF（情報を表示）'}`}
-          >
-            {privacyMode ? (
-              <EyeOff />
-            ) : (
-              <Eye />
-            )}
-          </button>
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle"
-            title={`現在: ${theme === 'light' ? 'ライト' : 'ダーク'}モード`}
-          >
-            {theme === 'light' ? (
-              <Sun />
-            ) : (
-              <Moon />
-            )}
-          </button>
-        </div>
+        {/* 設定ドロワーメニュー */}
+        <ActionDrawer
+          theme={theme}
+          privacyMode={privacyMode}
+          isDemoMode={isDemoMode}
+          onToggleTheme={toggleTheme}
+          onTogglePrivacyMode={togglePrivacyMode}
+          onToggleDemoMode={toggleDemoMode}
+          onOpenDeveloperTools={() => setShowDeveloperTools(true)}
+        />
       </div>
       
+      {/* メイン機能ボタン */}
       <div className="flex gap-4">
         <button
           onClick={handleOpenNewMeetingForm}
@@ -176,7 +149,6 @@ return (
           <Upload className="mr-2" size={20} />
           icsファイルをインポート
         </button>
-
       </div>
     </div>
 
