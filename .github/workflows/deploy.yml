@@ -49,4 +49,4 @@ jobs:
           git checkout HEAD -- docs/
           git add docs/
           git commit -m "Deploy to GitHub Pages - $(date '+%Y-%m-%d %H:%M:%S')" || exit 0
-          git push origin production
+          git push origin production -f
