@@ -1118,9 +1118,11 @@ return (
                             type="radio"
                             name={`dateTimeMode-${meeting.id}`}
                             value="scheduled"
-                            checked={editingData.preferredOptions.some((opt: any) => opt.date && opt.timeSlot)}
+                            checked={editingData.preferredOptions.length > 0}
                             onChange={() => {
-                              // 日時指定モードに切り替える時、既存のデータは保持
+                              // 日時指定モードに切り替える時、空の希望日程を追加
+                              const newOptions = Array(5).fill(null).map(() => ({ date: '', timeSlot: '' }));
+                              updateInlineMeetingField(meeting.id, 'preferredOptions', newOptions);
                             }}
                             className="mr-2"
                           />
@@ -1131,11 +1133,10 @@ return (
                             type="radio"
                             name={`dateTimeMode-${meeting.id}`}
                             value="undetermined"
-                            checked={!editingData.preferredOptions.some((opt: any) => opt.date && opt.timeSlot)}
+                            checked={editingData.preferredOptions.length === 0}
                             onChange={() => {
                               // 日時未定モードに切り替える時、日時をクリア
-                              const clearedOptions = Array(5).fill({ date: '', timeSlot: '' });
-                              updateInlineMeetingField(meeting.id, 'preferredOptions', clearedOptions);
+                              updateInlineMeetingField(meeting.id, 'preferredOptions', []);
                             }}
                             className="mr-2"
                           />
@@ -1144,7 +1145,7 @@ return (
                       </div>
                     </div>
                     
-                    {editingData.preferredOptions.some((opt: any) => opt.date && opt.timeSlot) && (
+                    {editingData.preferredOptions.length > 0 && (
                       <>
                         <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                           希望日程と時間帯
