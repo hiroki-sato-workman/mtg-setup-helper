@@ -3,6 +3,7 @@ import type { Meeting, FormData, ValidationErrors, TimeDialogData, Toast } from 
 import { validateForm, createEmptyFormData } from '~/utils/scheduleUtils';
 import { parseIcsFile } from '~/utils/icsUtils';
 import { exportMeetingData, importMeetingData } from '~/utils/dataUtils';
+import { useDemoMode } from './useDemoMode';
 
 /**
  * 面談スケジューラーの状態管理とビジネスロジックを提供するカスタムフック
@@ -11,6 +12,7 @@ import { exportMeetingData, importMeetingData } from '~/utils/dataUtils';
  * const { meetings, addMeeting, editMeeting, ... } = useMeetingScheduler();
  */
 export const useMeetingScheduler = () => {
+  const { isDemoMode, toggleDemoMode, getDemoData } = useDemoMode();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
@@ -26,19 +28,25 @@ export const useMeetingScheduler = () => {
   const [privacyMode, setPrivacyMode] = useState(false);
 
   useEffect(() => {
-    const savedMeetings = localStorage.getItem('meetingSchedulerData');
-    if (savedMeetings) {
-      try {
-        setMeetings(JSON.parse(savedMeetings));
-      } catch (error) {
-        console.error('データの読み込みに失敗しました:', error);
+    if (isDemoMode) {
+      setMeetings(getDemoData());
+    } else {
+      const savedMeetings = localStorage.getItem('meetingSchedulerData');
+      if (savedMeetings) {
+        try {
+          setMeetings(JSON.parse(savedMeetings));
+        } catch (error) {
+          console.error('データの読み込みに失敗しました:', error);
+        }
       }
     }
-  }, []);
+  }, [isDemoMode]);
 
   useEffect(() => {
-    localStorage.setItem('meetingSchedulerData', JSON.stringify(meetings));
-  }, [meetings]);
+    if (!isDemoMode) {
+      localStorage.setItem('meetingSchedulerData', JSON.stringify(meetings));
+    }
+  }, [meetings, isDemoMode]);
 
   // Note: dateTimeModeはhome.tsxで管理されているため、ここでは従来の動作を保持
 
@@ -380,6 +388,7 @@ export const useMeetingScheduler = () => {
     validationErrors,
     toasts,
     privacyMode,
+    isDemoMode,
     
     // Actions
     addMeeting,
@@ -403,6 +412,7 @@ export const useMeetingScheduler = () => {
     resetForm,
     openNewMeetingForm,
     togglePrivacyMode,
+    toggleDemoMode,
     scrollToMeeting,
     handleDataExport,
     handleDataImport,

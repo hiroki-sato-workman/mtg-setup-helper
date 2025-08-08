@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Monitor, MapPin, Eye, EyeOff, NotebookPen, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { Calendar, User, FileText, Plus, Trash2, AlertTriangle, Check, Camera, X, Users, Edit2, Download, CheckCircle, Upload, Sun, Moon, Monitor, MapPin, Eye, EyeOff, NotebookPen, ChevronDown, ChevronUp, Settings, Play } from 'lucide-react';
 import { useMeetingScheduler } from '~/hooks/useMeetingScheduler';
 import { useTheme } from '~/hooks/useTheme';
 import { generateIcsFile, generateUnifiedIcsFile } from '~/utils/icsUtils';
@@ -29,6 +29,7 @@ const MeetingScheduler = () => {
     validationErrors,
     toasts,
     privacyMode,
+    isDemoMode,
     addMeeting,
     editMeeting,
     startInlineEdit,
@@ -49,6 +50,7 @@ const MeetingScheduler = () => {
     resetForm,
     openNewMeetingForm,
     togglePrivacyMode,
+    toggleDemoMode,
     scrollToMeeting,
     handleDataExport,
     handleDataImport,
@@ -101,8 +103,20 @@ return (
           <h1 className={`text-3xl font-bold mb-2 flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
             <Calendar className={`mr-3 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
             面談・ミーティング調整ツール
+            {isDemoMode && (
+              <span className="ml-3 px-2 py-1 text-xs bg-green-600 text-white rounded-full font-normal">
+                デモモード
+              </span>
+            )}
           </h1>
-          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>複数の人との面談日程を効率的に調整し、重複を防ぎます</p>
+          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+            複数の人との面談日程を効率的に調整し、重複を防ぎます
+            {isDemoMode && (
+              <span className="block mt-1 text-sm text-green-600 font-medium">
+                現在サンプルデータを表示しています。実際のデータは保存されません。
+              </span>
+            )}
+          </p>
         </div>
         
         {/* テーマ切り替えボタンとプライバシーモード切り替えボタン */}
@@ -113,6 +127,13 @@ return (
             title="開発者ツール（データバックアップ・リストア）"
           >
             <Settings />
+          </button>
+          <button
+            onClick={toggleDemoMode}
+            className={`theme-toggle ${isDemoMode ? 'bg-green-600 text-white hover:bg-green-700' : ''}`}
+            title={`デモモード: ${isDemoMode ? 'ON（サンプルデータを表示）' : 'OFF（実際のデータを表示）'}`}
+          >
+            <Play />
           </button>
           <button
             onClick={togglePrivacyMode}
