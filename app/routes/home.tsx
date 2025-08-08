@@ -439,7 +439,7 @@ return (
                         </div>
                         {meeting.notes && (
                           <div className={`text-xs mt-1 truncate ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                            {meeting.notes.length > 30 ? `${meeting.notes.substring(0, 30)}...` : meeting.notes}
+                            {privacyMode ? `${getPrivacyIdentifier(meetingId, allMeetingIds)}のメモ` : (meeting.notes.length > 30 ? `${meeting.notes.substring(0, 30)}...` : meeting.notes)}
                           </div>
                         )}
                         {meeting.meetingLocation && (
