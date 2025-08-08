@@ -48,9 +48,6 @@ export const useMeetingScheduler = () => {
     }
   }, [meetings, isDemoMode]);
 
-  // Note: dateTimeModeはhome.tsxで管理されているため、ここでは従来の動作を保持
-
-
   const addMeeting = (dateTimeMode?: 'scheduled' | 'undetermined') => {
     const errors = validateForm(formData, dateTimeMode);
     if (Object.keys(errors).length > 0) {
