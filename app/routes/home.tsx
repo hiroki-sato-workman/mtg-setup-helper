@@ -489,15 +489,15 @@ return (
     {/* 確定面談一覧 */}
     {allConfirmedMeetings.length > 0 && (
       <div className={`rounded-none md:rounded-lg shadow-none md:shadow-lg p-4 md:p-6 mb-4 md:mb-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4">
-            <h2 className={`text-xl font-semibold flex items-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
-              <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
-              確定面談一覧
-            </h2>
+        <div className="mb-4">
+          <h2 className={`text-xl font-semibold flex items-center mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+            <CheckCircle className={`mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+            確定面談一覧
+          </h2>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <button
               onClick={() => setShowPastMeetings(!showPastMeetings)}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              className={`px-3 py-2 text-sm rounded-md transition-colors w-full md:w-auto ${
                 showPastMeetings
                   ? (theme === 'dark' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-100 text-blue-800 hover:bg-blue-200')
                   : (theme === 'dark' ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
@@ -505,15 +505,15 @@ return (
             >
               {showPastMeetings ? '過去を含む' : '今後のみ'}
             </button>
+            <button
+              onClick={() => generateUnifiedIcsFile(meetings, notificationTimes)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center text-sm w-full md:w-auto"
+              title="確定済みの全ての面談を統合したICSファイルをダウンロード"
+            >
+              <Download className="mr-2" size={16} />
+              統合ICSエクスポート
+            </button>
           </div>
-          <button
-            onClick={() => generateUnifiedIcsFile(meetings, notificationTimes)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm"
-            title="確定済みの全ての面談を統合したICSファイルをダウンロード"
-          >
-            <Download className="mr-2" size={16} />
-            統合ICSエクスポート
-          </button>
         </div>
         
         <div className="space-y-6">
